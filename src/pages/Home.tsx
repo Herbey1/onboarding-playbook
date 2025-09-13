@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { Plus, BookOpen, Users, Settings, LogOut, User, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import { EmptyState } from "@/components/EmptyStates";
 
 // Mock data for projects - en una implementación real vendría de Supabase
 const mockProjects = [
@@ -94,155 +96,233 @@ const Home = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-subtle">
       {/* Top Bar */}
-      <header className="border-b border-border bg-card shadow-soft">
+      <motion.header 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="glass border-b border-border shadow-soft sticky top-0 z-10"
+      >
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-stepable-2xl font-bold text-primary">Stepable</h1>
-              <Badge variant="secondary" className="hidden sm:inline-flex">
+            <motion.div 
+              className="flex items-center space-x-4"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
+              <h1 className="text-stepable-2xl font-bold gradient-primary bg-clip-text text-transparent">
+                Stepable
+              </h1>
+              <Badge variant="secondary" className="hidden sm:inline-flex hover-scale">
                 Proyectos
               </Badge>
-            </div>
+            </motion.div>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="" />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getUserInitials(user.email || "")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden sm:inline">{user.email}</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configuración
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar sesión
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 hover-glow">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="" />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getUserInitials(user.email || "")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline">{user.email}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    Perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configuración
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Cerrar sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </motion.div>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <motion.div 
+          className="flex items-center justify-between mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
           <div>
             <h2 className="text-stepable-3xl font-bold mb-2">Mis Proyectos</h2>
             <p className="text-muted-foreground">
               Gestiona el onboarding de tus equipos de desarrollo
             </p>
           </div>
-          <Button onClick={handleCreateProject} className="stepable-button">
-            <Plus className="mr-2 h-4 w-4" />
-            Crear proyecto
-          </Button>
-        </div>
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button onClick={handleCreateProject} className="stepable-button hover-glow">
+              <Plus className="mr-2 h-4 w-4" />
+              Crear proyecto
+            </Button>
+          </motion.div>
+        </motion.div>
 
         {projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <Card
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            {projects.map((project, index) => (
+              <motion.div
                 key={project.id}
-                className="stepable-card hover:shadow-medium cursor-pointer group"
-                onClick={() => navigate(`/project/${project.id}`)}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  delay: 0.7 + index * 0.1,
+                  duration: 0.4,
+                  ease: "easeOut"
+                }}
+                whileHover={{ 
+                  y: -8,
+                  transition: { duration: 0.2, ease: "easeOut" }
+                }}
+                className="group"
               >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-stepable-xl group-hover:text-primary transition-colors">
-                        {project.name}
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        {project.description}
-                      </CardDescription>
-                    </div>
-                    <Badge 
-                      variant={project.status === "published" ? "default" : "secondary"}
-                      className="ml-2"
-                    >
-                      {project.status === "published" ? "Publicado" : "Borrador"}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Stack */}
-                    <div>
-                      <p className="text-sm font-medium mb-2">Stack tecnológico</p>
-                      <div className="flex flex-wrap gap-1">
-                        {project.stack.map((tech) => (
-                          <Badge key={tech} variant="outline" className="text-xs">
-                            {tech}
-                          </Badge>
-                        ))}
+                <Card
+                  className="stepable-card hover:shadow-strong cursor-pointer group h-full bg-card/80 backdrop-blur-sm border-0 transition-all duration-300"
+                  onClick={() => navigate(`/project/${project.id}`)}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-stepable-xl group-hover:text-primary transition-colors duration-200">
+                          {project.name}
+                        </CardTitle>
+                        <CardDescription className="mt-2">
+                          {project.description}
+                        </CardDescription>
                       </div>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        className="ml-2"
+                      >
+                        <Badge 
+                          variant={project.status === "published" ? "default" : "secondary"}
+                          className="hover-scale transition-transform duration-200"
+                        >
+                          {project.status === "published" ? "Publicado" : "Borrador"}
+                        </Badge>
+                      </motion.div>
                     </div>
-
-                    {/* Progress */}
-                    {project.status === "published" && (
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Stack */}
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium">Progreso del onboarding</p>
-                          <span className="text-sm text-muted-foreground">{project.progress}%</span>
-                        </div>
-                        <Progress value={project.progress} className="stepable-progress h-2" />
+                        <p className="text-sm font-medium mb-2">Stack tecnológico</p>
+                        <motion.div 
+                          className="flex flex-wrap gap-1"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 1 + index * 0.1 }}
+                        >
+                          {project.stack.map((tech, techIndex) => (
+                            <motion.div
+                              key={tech}
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ 
+                                delay: 1.1 + index * 0.1 + techIndex * 0.05,
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 20
+                              }}
+                            >
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs hover-scale transition-transform duration-200"
+                              >
+                                {tech}
+                              </Badge>
+                            </motion.div>
+                          ))}
+                        </motion.div>
                       </div>
-                    )}
 
-                    {/* Metadata */}
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4" />
-                        <span>{project.members} miembros</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <BookOpen className="h-4 w-4" />
-                        <span>Últ. actividad: {new Date(project.lastActivity).toLocaleDateString()}</span>
-                      </div>
+                      {/* Progress */}
+                      {project.status === "published" && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 1.2 + index * 0.1 }}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium">Progreso del onboarding</p>
+                            <span className="text-sm text-muted-foreground font-medium text-primary">
+                              {project.progress}%
+                            </span>
+                          </div>
+                          <Progress value={project.progress} className="stepable-progress h-3" />
+                        </motion.div>
+                      )}
+
+                      {/* Metadata */}
+                      <motion.div 
+                        className="flex items-center justify-between text-sm text-muted-foreground"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.3 + index * 0.1 }}
+                      >
+                        <div className="flex items-center space-x-1 hover:text-foreground transition-colors">
+                          <Users className="h-4 w-4" />
+                          <span>{project.members} miembros</span>
+                        </div>
+                        <div className="flex items-center space-x-1 hover:text-foreground transition-colors">
+                          <BookOpen className="h-4 w-4" />
+                          <span>Últ. actividad: {new Date(project.lastActivity).toLocaleDateString()}</span>
+                        </div>
+                      </motion.div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
-          // Empty state
-          <Card className="stepable-card text-center py-12">
-            <CardContent>
-              <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                <Plus className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <CardTitle className="text-stepable-xl mb-2">
-                ¡Crea tu primer proyecto!
-              </CardTitle>
-              <CardDescription className="mb-6 max-w-md mx-auto">
-                Comienza subiendo las guías de tu equipo y genera un plan de onboarding
-                personalizado para nuevos desarrolladores.
-              </CardDescription>
-              <Button onClick={handleCreateProject} className="stepable-button">
-                <Plus className="mr-2 h-4 w-4" />
-                Crear proyecto
-              </Button>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            <EmptyState
+              variant="projects"
+              title="¡Crea tu primer proyecto!"
+              description="Comienza subiendo las guías de tu equipo y genera un plan de onboarding personalizado para nuevos desarrolladores."
+              actionLabel="Crear proyecto"
+              onAction={handleCreateProject}
+            />
+          </motion.div>
         )}
       </main>
     </div>
