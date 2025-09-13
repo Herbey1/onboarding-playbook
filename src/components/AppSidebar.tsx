@@ -327,77 +327,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Plans Section */}
-        <div className="mt-auto pt-6">
-          <SidebarGroup className="overflow-hidden">
-            <AnimatePresence mode="wait">
-              {!collapsed && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground mb-3 px-2">
-                    PLANES
-                  </SidebarGroupLabel>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            <SidebarGroupContent className="overflow-hidden">
-              <SidebarMenu className="space-y-2">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.3 }}
-                >
-                  <SidebarMenuItem>
-                    <div className={`transition-all duration-300 rounded-xl p-3 border-2 border-primary/20 bg-primary/5 ${collapsed ? 'hidden' : 'block'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-primary text-sm">Gratuito</span>
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Actual</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        • 5 proyectos<br/>
-                        • Funciones básicas<br/>
-                        • Soporte comunidad
-                      </div>
-                    </div>
-                  </SidebarMenuItem>
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.3 }}
-                >
-                  <SidebarMenuItem>
-                    <motion.button
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full transition-all duration-300 rounded-xl p-3 border-2 border-accent/30 bg-gradient-to-br from-accent/10 to-primary/10 hover:from-accent/20 hover:to-primary/20 hover:shadow-medium ${collapsed ? 'hidden' : 'block'}`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-accent text-sm">Premium</span>
-                        <span className="text-xs bg-accent text-white px-2 py-1 rounded-full">Mejorar</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground text-left">
-                        • Proyectos ilimitados<br/>
-                        • IA avanzada<br/>
-                        • Soporte prioritario
-                      </div>
-                    </motion.button>
-                  </SidebarMenuItem>
-                </motion.div>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </div>
-
         {/* User Section */}
-        <div className="pt-4">
+        <div className="mt-auto pt-6">
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu className="space-y-2">
