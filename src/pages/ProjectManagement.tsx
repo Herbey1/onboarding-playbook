@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,14 +77,14 @@ const ProjectManagement = () => {
   const isAdmin = isOwner || userMember?.role === 'admin';
 
   // Initialize settings data when project loads
-  useState(() => {
+  useEffect(() => {
     if (project) {
       setSettingsData({
         name: project.name,
         description: project.description || ""
       });
     }
-  });
+  }, [project]);
 
   if (!project) {
     return (

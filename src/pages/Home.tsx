@@ -5,11 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { Target, CheckCircle, Users, Star, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useProjects, useProjectMembers } from "@/hooks/useProjects";
+import { useProjects } from "@/hooks/useProjects";
 import { EmptyState } from "@/components/EmptyStates";
 import ProjectCard from "@/components/ProjectCard";
 import CreateProjectDialog from "@/components/CreateProjectDialog";
 import JoinProjectDialog from "@/components/JoinProjectDialog";
+import { useProjectActions } from "@/hooks/useProjectActions";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,76 +23,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Mock data for projects - enhanced with more engaging data
-const mockProjects = [
-  {
-    id: "1",
-    name: "Sistema de Pagos",
-    description: "API REST para procesamiento de pagos con Stripe y webhooks",
-    stack: ["React", "Node.js", "PostgreSQL", "Docker", "Stripe"],
-    progress: 75,
-    status: "published",
-    members: 8,
-    lastActivity: "2024-01-15",
-    completedModules: 6,
-    totalModules: 8,
-    averageRating: 4.8,
-    daysActive: 15,
-    recentActivity: "2 horas"
-  },
-  {
-    id: "2", 
-    name: "Dashboard Analytics",
-    description: "Panel de control con métricas en tiempo real y visualizaciones",
-    stack: ["Vue.js", "Python", "Redis", "Kubernetes", "D3.js"],
-    progress: 45,
-    status: "draft",
-    members: 5,
-    lastActivity: "2024-01-12",
-    completedModules: 3,
-    totalModules: 7,
-    averageRating: 4.2,
-    daysActive: 8,
-    recentActivity: "1 día"
-  },
-  {
-    id: "3",
-    name: "Mobile App",
-    description: "Aplicación móvil para gestión de inventario en tiempo real",
-    stack: ["React Native", "Firebase", "TypeScript", "Redux"],
-    progress: 90,
-    status: "published", 
-    members: 12,
-    lastActivity: "2024-01-14",
-    completedModules: 9,
-    totalModules: 10,
-    averageRating: 4.9,
-    daysActive: 25,
-    recentActivity: "30 min"
-  }
-];
-
-// Enhanced stack colors with more variety
-const stackColors: Record<string, string> = {
-  "React": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
-  "Node.js": "bg-green-100 text-green-800 border-green-200 hover:bg-green-200",
-  "PostgreSQL": "bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200",
-  "Docker": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
-  "Vue.js": "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200",
-  "Python": "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200",
-  "Redis": "bg-red-100 text-red-800 border-red-200 hover:bg-red-200",
-  "Kubernetes": "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200",
-  "React Native": "bg-cyan-100 text-cyan-800 border-cyan-200 hover:bg-cyan-200",
-  "Firebase": "bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200",
-  "TypeScript": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
-  "Stripe": "bg-violet-100 text-violet-800 border-violet-200 hover:bg-violet-200",
-  "D3.js": "bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-200",
-  "Redux": "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
-};
+// Project members cache for performance
+const projectMembersCache = new Map();
 
 const Home = () => {
   const { user, loading: authLoading } = useAuth();
-  const { projects, loading: projectsLoading, createProject, deleteProject, joinProjectByCode } = useProjects();
+  const { projects, loading: projectsLoading, createProject } = useProjects();
+  const { handleDeleteProject, handleLeaveProject, handleJoinProject, loading: actionLoading } = useProjectActions();
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [leaveProjectId, setLeaveProjectId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -108,23 +47,22 @@ const Home = () => {
     await createProject(name, description);
   };
 
-  const handleJoinProject = async (inviteCode: string) => {
-    if (!user) return;
-    await joinProjectByCode(inviteCode);
-  };
-
-  const handleDeleteProject = async (projectId: string) => {
-    await deleteProject(projectId);
-    setDeleteProjectId(null);
-  };
-
-  const handleLeaveProject = async (projectId: string) => {
-    const projectMembers = useProjectMembers(projectId);
-    const success = await projectMembers.leaveProject();
+  const onDeleteProject = async (projectId: string) => {
+    const success = await handleDeleteProject(projectId);
     if (success) {
-      // Project will be removed from list automatically when we refetch
+      setDeleteProjectId(null);
     }
-    setLeaveProjectId(null);
+  };
+
+  const onLeaveProject = async (projectId: string) => {
+    const success = await handleLeaveProject(projectId);
+    if (success) {
+      setLeaveProjectId(null);
+    }
+  };
+
+  const onJoinProject = async (inviteCode: string) => {
+    await handleJoinProject(inviteCode);
   };
 
   // Calculate real dashboard stats
@@ -239,7 +177,7 @@ const Home = () => {
         
         <div className="flex gap-3">
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <JoinProjectDialog onJoinProject={handleJoinProject} loading={projectsLoading} />
+            <JoinProjectDialog onJoinProject={onJoinProject} loading={actionLoading} />
           </motion.div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <CreateProjectDialog onCreateProject={handleCreateProject} loading={projectsLoading} />
@@ -307,11 +245,12 @@ const Home = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteProjectId && handleDeleteProject(deleteProjectId)}
+              onClick={() => deleteProjectId && onDeleteProject(deleteProjectId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={actionLoading}
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Eliminar
+              {actionLoading ? 'Eliminando...' : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -329,10 +268,11 @@ const Home = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => leaveProjectId && handleLeaveProject(leaveProjectId)}
+              onClick={() => leaveProjectId && onLeaveProject(leaveProjectId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={actionLoading}
             >
-              Abandonar
+              {actionLoading ? 'Saliendo...' : 'Abandonar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -355,12 +295,38 @@ const ProjectWithMembers = ({
   onDelete: () => void;
   onLeave: () => void;
 }) => {
-  const { members } = useProjectMembers(project.id);
+  // Create a minimal hook instance just for this project's members
+  const [members, setMembers] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const { data } = await supabase
+          .from('project_members')
+          .select(`
+            id,
+            project_id,
+            user_id,
+            role,
+            joined_at,
+            profiles(email, full_name, avatar_url)
+          `)
+          .eq('project_id', project.id);
+        
+        setMembers(data || []);
+      } catch (error) {
+        console.error('Error fetching members:', error);
+        setMembers([]);
+      }
+    };
+
+    fetchMembers();
+  }, [project.id]);
   
   return (
     <ProjectCard
       project={project}
-      members={members || []}
+      members={members}
       index={index}
       currentUserId={currentUserId}
       onDelete={onDelete}
