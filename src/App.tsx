@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
+import Profile from "./pages/Profile";
 import ProjectLayout from "./pages/ProjectLayout";
 import Library from "./pages/Library";
 import OnboardingPlan from "./pages/OnboardingPlan";
@@ -24,6 +25,7 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Home />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/project/:projectId" element={<ProjectLayout />}>
             <Route path="library" element={<Library />} />
             <Route path="onboarding/plan" element={<OnboardingPlan />} />

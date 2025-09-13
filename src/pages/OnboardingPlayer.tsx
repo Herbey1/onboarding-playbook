@@ -138,24 +138,32 @@ const OnboardingPlayer = () => {
   }, [searchParams]);
 
   const handlePrevious = () => {
+    // In a real app, navigate to the previous lesson
     toast({
-      title: "Navegación",
-      description: "Ir a la lección anterior",
+      title: "Lección anterior",
+      description: "Navegando a la lección anterior...",
     });
   };
 
   const handleNext = () => {
+    // In a real app, navigate to the next lesson
     toast({
-      title: "Navegación", 
-      description: "Ir a la siguiente lección",
+      title: "Siguiente lección",
+      description: "Avanzando a la siguiente lección...",
     });
   };
 
   const handleCompleteLesson = () => {
+    // Mark lesson as completed and update progress
     toast({
       title: "¡Lección completada!",
-      description: "Has completado esta lección correctamente",
+      description: "Has completado esta lección correctamente. ¡Excelente trabajo!",
     });
+    // In a real app, this would update the lesson status in the database
+  };
+
+  const handleBackToPlan = () => {
+    navigate(`/project/${new URLSearchParams(window.location.search).get('projectId') || '1'}/onboarding/plan`);
   };
 
   const validatePR = () => {
@@ -230,7 +238,7 @@ const OnboardingPlayer = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={handleBackToPlan}
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
               Volver al plan
@@ -277,16 +285,20 @@ const OnboardingPlayer = () => {
             <TabsContent value="reading" className="space-y-6">
               <Card className="stepable-card">
                 <CardContent className="pt-6">
-                  <div className="prose prose-sm max-w-none">
-                    <div dangerouslySetInnerHTML={{ 
-                      __html: lesson.content.reading
-                        .replace(/\n## /g, '\n<h2>')
-                        .replace(/\n# /g, '\n<h1>')
-                        .replace(/\n- /g, '\n<li>')
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/`(.*?)`/g, '<code>$1</code>')
-                        .replace(/\n/g, '<br/>')
-                    }} />
+                  <div className="prose prose-sm max-w-none stepable-card-interactive">
+                    <div 
+                      className="prose-stepable"
+                      dangerouslySetInnerHTML={{ 
+                        __html: lesson.content.reading
+                          .replace(/\n## /g, '\n<h2 class="text-stepable-xl font-bold text-primary mb-4 mt-6">')
+                          .replace(/\n# /g, '\n<h1 class="text-stepable-2xl font-bold text-foreground mb-6 mt-8">')
+                          .replace(/\n- /g, '\n<li class="mb-2">')
+                          .replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary font-semibold">$1</strong>')
+                          .replace(/`(.*?)`/g, '<code class="bg-muted px-2 py-1 rounded text-sm font-mono text-accent">$1</code>')
+                          .replace(/\n\n/g, '<br/><br/>')
+                          .replace(/\n/g, '<br/>')
+                      }} 
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -309,9 +321,9 @@ const OnboardingPlayer = () => {
                       onChange={(e) => setPrContent(e.target.value)}
                       className="min-h-[300px] font-mono text-sm"
                     />
-                    <Button onClick={validatePR} className="w-full">
+                    <Button onClick={validatePR} className="w-full hover-scale bg-gradient-to-r from-primary to-secondary text-white">
                       <CheckCircle className="mr-2 h-4 w-4" />
-                      Validar PR
+                      Validar mi PR
                     </Button>
                   </CardContent>
                 </Card>
@@ -422,9 +434,23 @@ const OnboardingPlayer = () => {
               ))}
               
               {!showResults && (
-                <Button onClick={submitQuiz} className="w-full stepable-button">
-                  Enviar respuestas
+                <Button onClick={submitQuiz} className="w-full stepable-button bg-gradient-to-r from-primary to-accent text-white hover-scale">
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  Enviar respuestas del quiz
                 </Button>
+              )}
+              
+              {showResults && (
+                <div className="text-center p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                  <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                  <h3 className="text-stepable-xl font-bold text-green-800 mb-2">¡Quiz Completado!</h3>
+                  <p className="text-green-700 mb-4">
+                    Has terminado todas las preguntas. Revisa tus respuestas y continúa con la siguiente lección.
+                  </p>
+                  <Button onClick={() => setActiveTab("reading")} variant="outline" className="hover-scale">
+                    Revisar contenido
+                  </Button>
+                </div>
               )}
             </TabsContent>
           </Tabs>
@@ -441,13 +467,13 @@ const OnboardingPlayer = () => {
           
           <div className="flex space-x-3">
             {lesson.status === "in_progress" && (
-              <Button variant="outline" onClick={handleCompleteLesson}>
+              <Button variant="outline" onClick={handleCompleteLesson} className="hover-scale">
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Marcar como completa
               </Button>
             )}
-            <Button onClick={handleNext}>
-              Siguiente
+            <Button onClick={handleNext} className="bg-gradient-to-r from-primary to-secondary text-white hover-scale">
+              Siguiente lección
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
