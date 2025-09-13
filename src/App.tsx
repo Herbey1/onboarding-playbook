@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import NotFound from "./pages/NotFound";
 import ProjectManagement from "./pages/ProjectManagement";
 import ProjectSettings from "./components/ProjectSettings";
+import ProjectDashboard from "./pages/ProjectDashboard";
 import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
@@ -64,7 +65,8 @@ const App = () => (
             <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<ProjectSettings />} />
             <Route path="manage" element={<ProjectManagement />} />
-            <Route index element={<Library />} />
+            <Route path="dashboard" element={<ProjectDashboard />} />
+            <Route index element={<ProjectDashboard />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

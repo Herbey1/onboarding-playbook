@@ -1,65 +1,38 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { 
-  Sparkles, 
-  MoreHorizontal, 
-  Edit3, 
-  Move, 
-  Trash2,
-  Play,
-  BookOpen,
-  Code,
-  HelpCircle,
-  Plus,
-  Eye,
-  Target,
-  Users,
-  Award,
-  Clock,
-  CheckCircle,
-  Zap,
-  TrendingUp,
-  RefreshCw,
-  AlertCircle
+  BookOpen, 
+  Play, 
+  RefreshCw, 
+  Clock, 
+  CheckCircle, 
+  Circle,
+  ArrowRight,
+  Sparkles,
+  FileText,
+  MessageSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate, useParams } from "react-router-dom";
-import { useCourseModules } from "@/hooks/useCourseModules";
 import { useProjects } from "@/hooks/useProjects";
+import { useCourseModules } from "@/hooks/useCourseModules";
 import { geminiService } from "@/services/geminiService";
 import { courseService } from "@/services/courseService";
-
-interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation?: string;
-}
-
 
 const OnboardingPlan = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { projects, fetchProjects } = useProjects();
-  const { modules, loading, error, fetchModules, deleteModule } = useCourseModules();
+  const { projects } = useProjects();
+  const { modules, loading } = useCourseModules(projectId!);
   const [isGenerating, setIsGenerating] = useState(false);
   
   const currentProject = projects.find(p => p.id === projectId);
-  
-  // Fetch modules when component mounts or projectId changes
-  useState(() => {
-    if (projectId) {
-      fetchModules(projectId);
-    }
-  }, [projectId, fetchModules]);
   
   const handleRegenerateContent = async () => {
     if (!currentProject || !projectId) {
@@ -68,73 +41,67 @@ const OnboardingPlan = () => {
     
     setIsGenerating(true);
     try {
-      // Get project documentation
-      const projectDocs = await courseService.getProjectDocumentation(projectId);
+      // Delete existing modules first
+      await courseService.deleteCourseModules(projectId);
       
       // Generate new content with Gemini
-      const generatedModules = await geminiService.generateCourse(
+      const generatedCourse = await geminiService.generateCourse(
         currentProject.name,
         currentProject.description || '',
-        projectDocs
+        {
+          pr_template: '',
+          code_nomenclature: '',
+          gitflow_docs: '',
+          additional_docs: ''
+        }
       );
       
-      // Delete existing modules
-      for (const module of modules) {
-        await deleteModule(module.id);
-      }
-      
       // Create new modules
-      await courseService.createCourseModules(projectId, generatedModules);
-      
-      // Refresh modules
-      await fetchModules(projectId);
+      await courseService.createCourseModules(projectId, generatedCourse.modules);
       
       toast({
         title: "Contenido regenerado",
         description: "El contenido del curso ha sido regenerado exitosamente"
       });
+      
+      // Refresh page to show new content
+      window.location.reload();
     } catch (error) {
       console.error('Error regenerating content:', error);
+      toast({
+        title: "Error al regenerar",
+        description: "Hubo un problema al regenerar el contenido",
+        variant: "destructive"
+      });
     } finally {
       setIsGenerating(false);
     }
   };
-  
-  const calculateOverallProgress = () => {
-    if (modules.length === 0) return 0;
-    // For now, return 0 as we don't have progress tracking yet
-    return 0;
+
+  const handleStartCourse = () => {
+    navigate(`/project/${projectId}/onboarding/player`);
   };
-  
-  const getModuleIcon = (type: string) => {
-    switch (type) {
-      case 'topic': return BookOpen;
-      case 'summary': return Eye;
-      case 'quiz': return HelpCircle;
-      default: return BookOpen;
-    }
-  };
-  
+
   if (loading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-96" />
+            <div className="h-8 bg-muted rounded w-64 animate-pulse mb-2" />
+            <div className="h-4 bg-muted rounded w-96 animate-pulse" />
           </div>
-          <Skeleton className="h-10 w-32" />
+          <div className="h-10 bg-muted rounded w-32 animate-pulse" />
         </div>
         
-        <div className="grid gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
+        <div className="grid gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
               <CardHeader>
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-72" />
+                <div className="h-6 bg-muted rounded w-48" />
+                <div className="h-4 bg-muted rounded w-72" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-20 w-full" />
+                <div className="h-20 bg-muted rounded" />
               </CardContent>
             </Card>
           ))}
@@ -142,195 +109,229 @@ const OnboardingPlan = () => {
       </div>
     );
   }
-  
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Error al cargar los módulos: {error}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-  
+
   if (!currentProject) {
     return (
-      <div className="container mx-auto p-6">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Proyecto no encontrado
-          </AlertDescription>
-        </Alert>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Proyecto no encontrado</h2>
+          <p className="text-muted-foreground">El proyecto que buscas no existe o no tienes acceso.</p>
+          <Button onClick={() => navigate('/')} className="mt-4">
+            Volver al inicio
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-start justify-between"
+      >
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            {currentProject.name} - Plan de Onboarding
+          <h1 className="text-stepable-3xl font-bold text-foreground">
+            Plan de Onboarding
           </h1>
-          <p className="text-muted-foreground">
-            Módulos generados automáticamente con IA
+          <p className="text-muted-foreground mt-2">
+            Curso personalizado para {currentProject.name}
           </p>
+          <div className="flex items-center gap-2 mt-3">
+            <Badge variant="secondary">
+              {modules.length} módulos
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              • Estimado 2-3 horas
+            </span>
+          </div>
         </div>
-        <div className="flex space-x-3">
-          <Button 
-            variant="outline" 
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
             onClick={handleRegenerateContent}
             disabled={isGenerating}
+            className="gap-2"
           >
             {isGenerating ? (
-              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
-              <Sparkles className="mr-2 h-4 w-4" />
+              <Sparkles className="h-4 w-4" />
             )}
-            {isGenerating ? 'Generando...' : 'Regenerar Contenido'}
+            {isGenerating ? 'Regenerando...' : 'Regenerar IA'}
           </Button>
-        </div>
-      </div>
-
-      {/* Overall Progress */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Target className="h-5 w-5 text-primary" />
-              </div>
-              <span className="font-semibold">Progreso general</span>
-            </div>
-            <span className="text-sm text-muted-foreground">
-              {modules.length} módulos disponibles
-            </span>
-          </div>
-          <Progress value={calculateOverallProgress()} className="h-3" />
-          <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
-            <span className="font-bold text-primary">
-              {calculateOverallProgress()}% completado
-            </span>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1">
-                <BookOpen className="h-4 w-4" />
-                {modules.length} módulos
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Empty State */}
-      {modules.length === 0 && (
-        <Card>
-          <CardContent className="pt-6 text-center py-12">
-            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No hay módulos disponibles</h3>
-            <p className="text-muted-foreground mb-4">
-              Los módulos se generan automáticamente cuando se crea el proyecto.
-            </p>
-            <Button onClick={handleRegenerateContent} disabled={isGenerating}>
-              {isGenerating ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
-              )}
-              {isGenerating ? 'Generando...' : 'Generar Módulos'}
+          {modules.length > 0 && (
+            <Button onClick={handleStartCourse} className="gap-2">
+              <Play className="h-4 w-4" />
+              Comenzar Curso
             </Button>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </div>
+      </motion.div>
 
-      {/* Modules */}
-      <div className="space-y-6">
-        {modules.map((module, index) => {
-          const ModuleIcon = getModuleIcon(module.type);
-          return (
-            <Card key={module.id} className="hover:shadow-md transition-shadow">
+      <Separator />
+
+      {/* Course Overview */}
+      {modules.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-12"
+        >
+          <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-xl font-semibold mb-2">No hay módulos disponibles</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Este proyecto aún no tiene módulos de onboarding. Genera contenido personalizado con IA.
+          </p>
+          <Button onClick={handleRegenerateContent} disabled={isGenerating} className="gap-2">
+            {isGenerating ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {isGenerating ? 'Generando...' : 'Generar Contenido'}
+          </Button>
+        </motion.div>
+      ) : (
+        <>
+          {/* Progress Overview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="stepable-card">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold">
-                        {index + 1}
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-1">
-                          {module.title}
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <ModuleIcon className="h-3 w-3" />
-                            {module.type === 'topic' ? 'Tema' : 
-                             module.type === 'summary' ? 'Resumen' : 'Quiz'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver contenido
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Edit3 className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-destructive"
-                        onClick={() => deleteModule(module.id)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Progreso del Curso
+                </CardTitle>
+                <CardDescription>
+                  Tu avance en el programa de onboarding
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Content Preview */}
-                  <div className="text-sm text-muted-foreground line-clamp-3">
-                    {module.content && module.content.length > 200 
-                      ? `${module.content.substring(0, 200)}...` 
-                      : module.content || 'Sin contenido disponible'
-                    }
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Progreso general</span>
+                    <span className="text-sm text-muted-foreground">0/{modules.length} completados</span>
                   </div>
-                  
-                  {/* Quiz Questions Count */}
-                  {module.type === 'quiz' && module.quiz_questions && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <HelpCircle className="h-4 w-4" />
-                      {JSON.parse(module.quiz_questions).length} preguntas
+                  <Progress value={0} className="h-2" />
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>Estimado: 2-3 horas</span>
                     </div>
-                  )}
-                  
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2 pt-2">
-                    <Button size="sm" variant="outline">
-                      <Play className="mr-2 h-4 w-4" />
-                      {module.type === 'quiz' ? 'Tomar Quiz' : 'Ver Contenido'}
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>0 módulos completados</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
+          </motion.div>
+
+          {/* Course Modules */}
+          <div className="space-y-4">
+            <h2 className="text-stepable-xl font-semibold">Módulos del Curso</h2>
+            
+            <div className="grid gap-4">
+              {modules.map((module, index) => (
+                <motion.div
+                  key={module.topic.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * (index + 2) }}
+                >
+                  <Card className="stepable-card hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigate(`/project/${projectId}/onboarding/player`)}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">
+                              {module.topic.title}
+                            </CardTitle>
+                            <CardDescription className="mt-1">
+                              {module.topic.description}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">
+                            <Circle className="h-3 w-3 mr-1" />
+                            Pendiente
+                          </Badge>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {/* Content Preview */}
+                        {module.summary && (
+                          <div className="flex items-start gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium mb-1">Contenido de aprendizaje</p>
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {module.summary.content.substring(0, 120)}...
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Quiz Preview */}
+                        {module.quiz && (
+                          <div className="flex items-start gap-2">
+                            <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium mb-1">{module.quiz.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {Array.isArray(module.quiz.questions) 
+                                  ? `${module.quiz.questions.length} preguntas` 
+                                  : 'Quiz disponible'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-xs text-muted-foreground">
+                            Módulo {index + 1} de {modules.length}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ~20 min
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex justify-center pt-6"
+          >
+            <Button size="lg" onClick={handleStartCourse} className="gap-2">
+              <Play className="h-5 w-5" />
+              Comenzar el Curso Completo
+            </Button>
+          </motion.div>
+        </>
+      )}
     </div>
   );
 };

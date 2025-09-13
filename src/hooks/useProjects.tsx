@@ -86,81 +86,129 @@ export function useProjects() {
       
       console.log('✅ [DEBUG] Usuario autenticado:', user.id);
 
-      // Crear proyecto temporal en memoria (sin guardar en Supabase)
-      console.log('📝 [DEBUG] Creando proyecto temporal en memoria...');
-      const tempProject = {
-        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        name,
-        description,
-        owner_id: user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        settings: {}
-      };
+      // Crear proyecto real en Supabase
+      console.log('📝 [DEBUG] Creando proyecto en Supabase...');
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          name,
+          description,
+          owner_id: user.id,
+          settings: {}
+        })
+        .select()
+        .single();
 
-      console.log('✅ [DEBUG] Proyecto temporal creado:', tempProject);
-
-      // Generar contenido del curso con IA
-        console.log('🤖 [DEBUG] Generando contenido del curso con IA...');
-        
-        // Mostrar toast de carga
-        toast({
-          title: "Generando contenido del curso",
-          description: "Estamos creando los módulos de onboarding con IA...",
-        });
-        
-        let courseModules = [];
-        try {
-          const generatedCourse = await geminiService.generateCourse(
-            name,
-            description,
-            documentation || {
-              pr_template: '',
-              code_nomenclature: '',
-              gitflow_docs: '',
-              additional_docs: ''
-            }
-          );
-          
-          courseModules = generatedCourse.modules;
-          console.log('✅ [DEBUG] Contenido del curso generado:', courseModules);
-      } catch (aiError) {
-         console.error('❌ [DEBUG] Error generando contenido con IA:', aiError);
-         // Crear módulos de ejemplo si falla la IA
-         courseModules = [
-           {
-             title: "Introducción al Proyecto",
-             description: "Módulo introductorio sobre los conceptos básicos del proyecto.",
-             order: 1,
-             content: "Contenido introductorio generado localmente."
-           },
-           {
-             title: "Desarrollo y Implementación",
-             description: "Guía práctica para el desarrollo del proyecto.",
-             order: 2,
-             content: "Contenido de desarrollo generado localmente."
-           }
-         ];
+      if (projectError) {
+        console.error('❌ [DEBUG] Error creando proyecto:', projectError);
+        throw projectError;
       }
 
-      // Agregar el proyecto temporal a la lista local
-      console.log('💾 [DEBUG] Agregando proyecto temporal a la lista local...');
-      const projectWithModules = {
-        ...tempProject,
-        courseModules,
-        documentation,
-        isTemporary: true // Marcar como temporal
-      };
-      
-      // Actualizar el estado local agregando el proyecto temporal
-      setProjects(prevProjects => [projectWithModules, ...prevProjects]);
-      
+      console.log('✅ [DEBUG] Proyecto creado en Supabase:', project);
+
+      // Guardar documentación si se proporciona
+      if (documentation) {
+        console.log('📄 [DEBUG] Guardando documentación del proyecto...');
+        const { error: docError } = await supabase
+          .from('project_documentation')
+          .insert({
+            project_id: project.id,
+            pr_template: documentation.pr_template || '',
+            code_nomenclature: documentation.code_nomenclature || '',
+            gitflow_docs: documentation.gitflow_docs || '',
+            additional_docs: documentation.additional_docs || '',
+            file_attachments: []
+          });
+
+        if (docError) {
+          console.warn('⚠️ [DEBUG] Error guardando documentación:', docError);
+          // No lanzamos error aquí, la documentación es opcional
+        } else {
+          console.log('✅ [DEBUG] Documentación guardada exitosamente');
+        }
+      }
+
+      // Generar contenido del curso con IA
+      console.log('🤖 [DEBUG] Generando contenido del curso con IA...');
+      // Mostrar toast de carga
       toast({
-        title: "¡Proyecto temporal creado!",
-        description: `El proyecto "${name}" ha sido creado en memoria. Los datos se eliminarán al salir de la aplicación.`,
+        title: "Generando contenido del curso",
+        description: "Estamos creando los módulos de onboarding con IA...",
       });
       
-      console.log('🎉 [DEBUG] Proceso de creación temporal completado exitosamente');
+      let courseModules = [];
+      try {
+        const generatedCourse = await geminiService.generateCourse(
+          name,
+          description,
+          documentation || {
+            pr_template: '',
+            code_nomenclature: '',
+            gitflow_docs: '',
+            additional_docs: ''
+          }
+        );
+        
+        courseModules = generatedCourse.modules;
+        console.log('✅ [DEBUG] Contenido del curso generado:', courseModules);
+
+        // Guardar los módulos del curso en Supabase
+        console.log('💾 [DEBUG] Guardando módulos del curso en Supabase...');
+        await courseService.createCourseModules(project.id, courseModules);
+        console.log('✅ [DEBUG] Módulos del curso guardados en Supabase');
+      } catch (aiError) {
+        console.error('❌ [DEBUG] Error generando contenido con IA:', aiError);
+        // Crear módulos de ejemplo si falla la IA
+        courseModules = [
+          {
+            title: "Introducción al Proyecto",
+            summary: "Módulo introductorio sobre los conceptos básicos del proyecto.",
+            quiz: {
+              title: "Quiz de Introducción",
+              questions: [
+                {
+                  question: "¿Cuál es el objetivo principal del proyecto?",
+                  options: ["Objetivo A", "Objetivo B", "Objetivo C"],
+                  correct: 0
+                }
+              ]
+            }
+          },
+          {
+            title: "Desarrollo y Implementación",
+            summary: "Guía práctica para el desarrollo del proyecto.",
+            quiz: {
+              title: "Quiz de Desarrollo",
+              questions: [
+                {
+                  question: "¿Cuál es la metodología de desarrollo recomendada?",
+                  options: ["Metodología A", "Metodología B", "Metodología C"],
+                  correct: 0
+                }
+              ]
+            }
+          }
+        ];
+
+        try {
+          console.log('💾 [DEBUG] Guardando módulos de ejemplo en Supabase...');
+          await courseService.createCourseModules(project.id, courseModules);
+          console.log('✅ [DEBUG] Módulos de ejemplo guardados en Supabase');
+        } catch (fallbackError) {
+          console.error('❌ [DEBUG] Error guardando módulos de ejemplo:', fallbackError);
+        }
+      }
+
+      // Recargar la lista de proyectos para incluir el nuevo proyecto
+      console.log('🔄 [DEBUG] Recargando lista de proyectos...');
+      await fetchProjects();
+      
+      toast({
+        title: "¡Proyecto creado exitosamente!",
+        description: `El proyecto "${name}" ha sido creado con ${courseModules.length} módulos de curso.`,
+      });
+      
+      console.log('🎉 [DEBUG] Proceso de creación completado exitosamente');
       
     } catch (error) {
       console.error('❌ [DEBUG] Error general en createProject:', error);
@@ -198,6 +246,19 @@ export function useProjects() {
 
   const deleteProject = async (projectId: string) => {
     try {
+      // Verificar si es un proyecto temporal
+      const project = projects.find(p => p.id === projectId);
+      if (project?.isTemporary) {
+        // Eliminar de la lista local
+        setProjects(prevProjects => prevProjects.filter(p => p.id !== projectId));
+        toast({
+          title: "Proyecto temporal eliminado",
+          description: "El proyecto temporal ha sido eliminado de la memoria"
+        });
+        return;
+      }
+
+      // Eliminar proyecto real de Supabase
       const { error } = await supabase
         .from('projects')
         .delete()
@@ -248,16 +309,6 @@ export function useProjects() {
 
   useEffect(() => {
     fetchProjects();
-    
-    // Limpiar proyectos temporales al desmontar el componente
-    return () => {
-      console.log('🧹 [DEBUG] Limpiando proyectos temporales al salir de la aplicación...');
-      setProjects(prevProjects => {
-        const permanentProjects = prevProjects.filter(project => !project.isTemporary);
-        console.log('✅ [DEBUG] Proyectos temporales eliminados. Proyectos permanentes restantes:', permanentProjects.length);
-        return permanentProjects;
-      });
-    };
   }, []);
 
   return {

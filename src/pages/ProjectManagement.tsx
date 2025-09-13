@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects, useProjectMembers } from "@/hooks/useProjects";
 import ProjectInviteCode from "@/components/ProjectInviteCode";
+import ProjectDocumentationManager from "@/components/ProjectDocumentationManager";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -224,8 +225,9 @@ const ProjectManagement = () => {
       </div>
 
       <Tabs defaultValue="members" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="members">Miembros</TabsTrigger>
+          <TabsTrigger value="documentation">Documentación</TabsTrigger>
           {isAdmin && <TabsTrigger value="settings">Configuración</TabsTrigger>}
         </TabsList>
 
@@ -455,6 +457,14 @@ const ProjectManagement = () => {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Documentation Tab */}
+        <TabsContent value="documentation" className="space-y-6">
+          <ProjectDocumentationManager 
+            projectId={projectId!} 
+            canEdit={isAdmin} 
+          />
         </TabsContent>
 
         {/* Settings Tab */}

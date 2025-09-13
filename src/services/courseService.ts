@@ -23,7 +23,7 @@ export interface CourseQuiz {
   id: string;
   topic_id: string;
   title: string;
-  questions: any[];
+  questions: any;
   created_at: string;
   updated_at: string;
 }
@@ -194,7 +194,7 @@ class CourseService {
     }
   }
 
-  async updateCourseQuiz(quizId: string, updates: { title?: string; questions?: any[] }): Promise<void> {
+  async updateCourseQuiz(quizId: string, updates: { title?: string; questions?: any }): Promise<void> {
     try {
       const { error } = await supabase
         .from('course_quizzes')
