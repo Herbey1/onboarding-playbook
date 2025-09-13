@@ -14,6 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_quizzes: {
+        Row: {
+          created_at: string
+          id: string
+          questions: Json
+          title: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          questions?: Json
+          title: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          questions?: Json
+          title?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_quizzes_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "course_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_summaries: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_summaries_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "course_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_index: number
+          project_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          project_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          project_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_topics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -49,6 +154,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      project_documentation: {
+        Row: {
+          additional_docs: string | null
+          code_nomenclature: string | null
+          created_at: string
+          file_attachments: Json | null
+          gitflow_docs: string | null
+          id: string
+          pr_template: string | null
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          additional_docs?: string | null
+          code_nomenclature?: string | null
+          created_at?: string
+          file_attachments?: Json | null
+          gitflow_docs?: string | null
+          id?: string
+          pr_template?: string | null
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          additional_docs?: string | null
+          code_nomenclature?: string | null
+          created_at?: string
+          file_attachments?: Json | null
+          gitflow_docs?: string | null
+          id?: string
+          pr_template?: string | null
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documentation_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_invitations: {
         Row: {

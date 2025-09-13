@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { EmptyState } from "@/components/EmptyStates";
 import ProjectCard from "@/components/ProjectCard";
-import CreateProjectDialog from "@/components/CreateProjectDialog";
+import CreateProjectDialog, { type ProjectDocumentation } from "@/components/CreateProjectDialog";
 import JoinProjectDialog from "@/components/JoinProjectDialog";
 import { useProjectActions } from "@/hooks/useProjectActions";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,9 +42,9 @@ const Home = () => {
     }
   }, [user, authLoading, navigate]);
 
-  const handleCreateProject = async (name: string, description?: string) => {
+  const handleCreateProject = async (name: string, description: string, documentation: ProjectDocumentation) => {
     if (!user) return;
-    await createProject(name, description);
+    await createProject(name, description, documentation);
   };
 
   const onDeleteProject = async (projectId: string) => {

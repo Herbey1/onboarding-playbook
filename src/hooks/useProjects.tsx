@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { ProjectDocumentation } from "@/components/CreateProjectDialog";
 
 export interface Project {
   id: string;
@@ -64,12 +65,13 @@ export function useProjects() {
     }
   };
 
-  const createProject = async (name: string, description?: string) => {
+  const createProject = async (name: string, description: string, documentation: ProjectDocumentation) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated');
 
-      const { data, error } = await supabase
+      // Create project
+      const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
           name,
@@ -79,18 +81,39 @@ export function useProjects() {
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating project:', error);
-        throw error;
+      if (projectError) {
+        console.error('Error creating project:', projectError);
+        throw projectError;
       }
 
-      toast({
-        title: "Proyecto creado",
-        description: `El proyecto "${name}" se ha creado correctamente`
-      });
+      // Create project documentation
+      const { error: docError } = await supabase
+        .from('project_documentation')
+        .insert({
+          project_id: project.id,
+          pr_template: documentation.pr_template,
+          code_nomenclature: documentation.code_nomenclature,
+          gitflow_docs: documentation.gitflow_docs,
+          additional_docs: documentation.additional_docs
+        });
+
+      if (docError) {
+        console.error('Error creating project documentation:', docError);
+        // If documentation fails, we should still show success but warn user
+        toast({
+          title: "Proyecto creado",
+          description: "El proyecto se creó pero hubo un problema con la documentación. Puedes editarla más tarde.",
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Proyecto creado",
+          description: `El proyecto "${name}" se ha creado correctamente con su documentación`
+        });
+      }
 
       fetchProjects();
-      return data;
+      return project;
     } catch (error: any) {
       console.error('Create project error:', error);
       toast({
