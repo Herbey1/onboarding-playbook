@@ -81,11 +81,7 @@ const ProjectSettings = () => {
         description: "Los cambios se han guardado correctamente"
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron guardar los cambios",
-        variant: "destructive"
-      });
+      console.error('Error saving settings:', error);
     } finally {
       setSaving(false);
     }

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { ProjectDocumentation } from "@/components/CreateProjectDialog";
+import { geminiService } from "@/services/geminiService";
+import { courseService } from "@/services/courseService";
 
 export interface Project {
   id: string;
@@ -11,6 +13,10 @@ export interface Project {
   settings: any;
   created_at: string;
   updated_at: string;
+  // Propiedades para proyectos temporales
+  isTemporary?: boolean;
+  courseModules?: any[];
+  documentation?: any;
 }
 
 export interface ProjectMember {
@@ -55,73 +61,114 @@ export function useProjects() {
       setProjects(data || []);
     } catch (error: any) {
       console.error('Error fetching projects:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los proyectos",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
   };
 
-  const createProject = async (name: string, description: string, documentation: ProjectDocumentation) => {
+  const createProject = async (name: string, description: string, documentation?: ProjectDocumentation) => {
+    console.log('🚀 [DEBUG] Iniciando creación de proyecto temporal:', { name, description, documentation });
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated');
+      // Verificar autenticación
+      console.log('🔐 [DEBUG] Verificando autenticación...');
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('❌ [DEBUG] Error de autenticación:', authError);
+        return;
+      }
+      
+      if (!user) {
+        console.error('❌ [DEBUG] Usuario no autenticado');
+        return;
+      }
+      
+      console.log('✅ [DEBUG] Usuario autenticado:', user.id);
 
-      // Create project
-      const { data: project, error: projectError } = await supabase
-        .from('projects')
-        .insert({
-          name,
-          description,
-          owner_id: user.id
-        })
-        .select()
-        .single();
+      // Crear proyecto temporal en memoria (sin guardar en Supabase)
+      console.log('📝 [DEBUG] Creando proyecto temporal en memoria...');
+      const tempProject = {
+        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name,
+        description,
+        owner_id: user.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        settings: {}
+      };
 
-      if (projectError) {
-        console.error('Error creating project:', projectError);
-        throw projectError;
+      console.log('✅ [DEBUG] Proyecto temporal creado:', tempProject);
+
+      // Generar contenido del curso con IA
+        console.log('🤖 [DEBUG] Generando contenido del curso con IA...');
+        
+        // Mostrar toast de carga
+        toast({
+          title: "Generando contenido del curso",
+          description: "Estamos creando los módulos de onboarding con IA...",
+        });
+        
+        let courseModules = [];
+        try {
+          const generatedCourse = await geminiService.generateCourse(
+            name,
+            description,
+            documentation || {
+              pr_template: '',
+              code_nomenclature: '',
+              gitflow_docs: '',
+              additional_docs: ''
+            }
+          );
+          
+          courseModules = generatedCourse.modules;
+          console.log('✅ [DEBUG] Contenido del curso generado:', courseModules);
+      } catch (aiError) {
+         console.error('❌ [DEBUG] Error generando contenido con IA:', aiError);
+         // Crear módulos de ejemplo si falla la IA
+         courseModules = [
+           {
+             title: "Introducción al Proyecto",
+             description: "Módulo introductorio sobre los conceptos básicos del proyecto.",
+             order: 1,
+             content: "Contenido introductorio generado localmente."
+           },
+           {
+             title: "Desarrollo y Implementación",
+             description: "Guía práctica para el desarrollo del proyecto.",
+             order: 2,
+             content: "Contenido de desarrollo generado localmente."
+           }
+         ];
       }
 
-      // Create project documentation
-      const { error: docError } = await supabase
-        .from('project_documentation')
-        .insert({
-          project_id: project.id,
-          pr_template: documentation.pr_template,
-          code_nomenclature: documentation.code_nomenclature,
-          gitflow_docs: documentation.gitflow_docs,
-          additional_docs: documentation.additional_docs
-        });
-
-      if (docError) {
-        console.error('Error creating project documentation:', docError);
-        // If documentation fails, we should still show success but warn user
-        toast({
-          title: "Proyecto creado",
-          description: "El proyecto se creó pero hubo un problema con la documentación. Puedes editarla más tarde.",
-          variant: "default"
-        });
-      } else {
-        toast({
-          title: "Proyecto creado",
-          description: `El proyecto "${name}" se ha creado correctamente con su documentación`
-        });
-      }
-
-      fetchProjects();
-      return project;
-    } catch (error: any) {
-      console.error('Create project error:', error);
+      // Agregar el proyecto temporal a la lista local
+      console.log('💾 [DEBUG] Agregando proyecto temporal a la lista local...');
+      const projectWithModules = {
+        ...tempProject,
+        courseModules,
+        documentation,
+        isTemporary: true // Marcar como temporal
+      };
+      
+      // Actualizar el estado local agregando el proyecto temporal
+      setProjects(prevProjects => [projectWithModules, ...prevProjects]);
+      
       toast({
-        title: "Error",
-        description: "No se pudo crear el proyecto",
-        variant: "destructive"
+        title: "¡Proyecto temporal creado!",
+        description: `El proyecto "${name}" ha sido creado en memoria. Los datos se eliminarán al salir de la aplicación.`,
       });
-      throw error;
+      
+      console.log('🎉 [DEBUG] Proceso de creación temporal completado exitosamente');
+      
+    } catch (error) {
+      console.error('❌ [DEBUG] Error general en createProject:', error);
+      console.error('❌ [DEBUG] Detalles completos del error:', {
+        message: error instanceof Error ? error.message : 'Error desconocido',
+        stack: error instanceof Error ? error.stack : undefined,
+        error
+      });
     }
   };
 
@@ -144,11 +191,7 @@ export function useProjects() {
 
       fetchProjects();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el proyecto",
-        variant: "destructive"
-      });
+      console.error('Error updating project:', error);
       throw error;
     }
   };
@@ -169,11 +212,7 @@ export function useProjects() {
 
       fetchProjects();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el proyecto",
-        variant: "destructive"
-      });
+      console.error('Error deleting project:', error);
       throw error;
     }
   };
@@ -202,17 +241,23 @@ export function useProjects() {
       fetchProjects();
       return data.data;
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Código de invitación inválido o expirado", 
-        variant: "destructive"
-      });
+      console.error('Error joining project:', error);
       throw error;
     }
   };
 
   useEffect(() => {
     fetchProjects();
+    
+    // Limpiar proyectos temporales al desmontar el componente
+    return () => {
+      console.log('🧹 [DEBUG] Limpiando proyectos temporales al salir de la aplicación...');
+      setProjects(prevProjects => {
+        const permanentProjects = prevProjects.filter(project => !project.isTemporary);
+        console.log('✅ [DEBUG] Proyectos temporales eliminados. Proyectos permanentes restantes:', permanentProjects.length);
+        return permanentProjects;
+      });
+    };
   }, []);
 
   return {
@@ -270,11 +315,7 @@ export function useProjectMembers(projectId: string) {
       // Fetch invite codes
       await fetchInviteCodes();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los miembros del proyecto",
-        variant: "destructive"
-      });
+      console.error('Error loading project members:', error);
     } finally {
       setLoading(false);
     }
@@ -325,11 +366,7 @@ export function useProjectMembers(projectId: string) {
       await fetchInviteCodes();
       return data.data;
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo generar el código de invitación",
-        variant: "destructive"
-      });
+      console.error('Error generating invite code:', error);
       throw error;
     }
   };
@@ -353,11 +390,7 @@ export function useProjectMembers(projectId: string) {
 
       await fetchInviteCodes();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo eliminar el código",
-        variant: "destructive"
-      });
+      console.error('Error deleting invite code:', error);
       throw error;
     }
   };
@@ -389,19 +422,7 @@ export function useProjectMembers(projectId: string) {
 
       fetchMembers();
     } catch (error: any) {
-      if (error.code === '23505') {
-        toast({
-          title: "Error",
-          description: "Este usuario ya tiene una invitación pendiente",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "No se pudo enviar la invitación",
-          variant: "destructive"
-        });
-      }
+      console.error('Error inviting user:', error);
     }
   };
 
@@ -421,11 +442,7 @@ export function useProjectMembers(projectId: string) {
 
       fetchMembers();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo cambiar el rol",
-        variant: "destructive"
-      });
+      console.error('Error changing role:', error);
     }
   };
 
@@ -445,11 +462,7 @@ export function useProjectMembers(projectId: string) {
 
       fetchMembers();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar al miembro",
-        variant: "destructive"
-      });
+      console.error('Error removing member:', error);
     }
   };
 
@@ -469,11 +482,7 @@ export function useProjectMembers(projectId: string) {
 
       fetchMembers();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo cancelar la invitación",
-        variant: "destructive"
-      });
+      console.error('Error canceling invitation:', error);
     }
   };
 
@@ -497,11 +506,7 @@ export function useProjectMembers(projectId: string) {
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo salir del proyecto",
-        variant: "destructive"
-      });
+      console.error('Error leaving project:', error);
       return false;
     }
   };

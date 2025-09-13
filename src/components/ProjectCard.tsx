@@ -22,6 +22,10 @@ interface Project {
   updated_at: string;
   owner_id: string;
   settings: any;
+  // Propiedades para proyectos temporales
+  isTemporary?: boolean;
+  courseModules?: any[];
+  documentation?: any;
 }
 
 interface ProjectMember {
@@ -91,9 +95,16 @@ const ProjectCard = ({ project, members, index, onDelete, onLeave, currentUserId
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1" onClick={() => navigate(`/project/${project.id}`)}>
-              <CardTitle className="text-stepable-xl group-hover:text-primary transition-colors duration-200">
-                {project.name}
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-stepable-xl group-hover:text-primary transition-colors duration-200">
+                  {project.name}
+                </CardTitle>
+                {project.isTemporary && (
+                  <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 rounded-full">
+                    Temporal
+                  </span>
+                )}
+              </div>
               <CardDescription className="mt-2">
                 {project.description || "Sin descripción"}
               </CardDescription>

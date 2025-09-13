@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface ProjectDocumentation {
@@ -43,21 +43,7 @@ const CreateProjectDialog = ({ onCreateProject, loading }: CreateProjectDialogPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre del proyecto es obligatorio",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!description.trim()) {
-      toast({
-        title: "Error", 
-        description: "La descripción del proyecto es obligatoria",
-        variant: "destructive",
-      });
+    if (!name.trim() || !description.trim()) {
       return;
     }
 
@@ -77,11 +63,7 @@ const CreateProjectDialog = ({ onCreateProject, loading }: CreateProjectDialogPr
         description: "Tu nuevo proyecto ha sido creado exitosamente",
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo crear el proyecto. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
+      console.error('Error creating project:', error);
     }
   };
 
@@ -189,7 +171,14 @@ const CreateProjectDialog = ({ onCreateProject, loading }: CreateProjectDialogPr
               Cancelar
             </Button>
             <Button type="submit" disabled={loading || !name.trim() || !description.trim()}>
-              {loading ? "Creando..." : "Crear proyecto"}
+              {loading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                "Crear proyecto"
+              )}
             </Button>
           </DialogFooter>
         </form>
