@@ -44,11 +44,7 @@ const ProjectInviteCode = ({ projectId, children }: ProjectInviteCodeProps) => {
         description: "El código de invitación ha sido copiado al portapapeles",
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo copiar el código al portapapeles",
-        variant: "destructive",
-      });
+      console.error('Error copying code to clipboard:', error);
     }
   };
 
@@ -79,11 +75,7 @@ const ProjectInviteCode = ({ projectId, children }: ProjectInviteCodeProps) => {
         description: `Se ha enviado una invitación a ${email}`,
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo enviar la invitación",
-        variant: "destructive",
-      });
+      console.error('Error sending invitation:', error);
     }
   };
 
@@ -123,7 +115,11 @@ const ProjectInviteCode = ({ projectId, children }: ProjectInviteCodeProps) => {
                 disabled={generatingCode}
                 className="flex-shrink-0"
               >
-                <Plus className={`h-4 w-4 mr-2 ${generatingCode ? 'animate-spin' : ''}`} />
+                {generatingCode ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-2" />
+                )}
                 {generatingCode ? 'Generando...' : 'Generar código'}
               </Button>
             </div>

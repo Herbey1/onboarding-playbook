@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Code } from "lucide-react";
+import { Code, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface JoinProjectDialogProps {
@@ -28,11 +28,6 @@ const JoinProjectDialog = ({ onJoinProject, loading }: JoinProjectDialogProps) =
     e.preventDefault();
     
     if (!inviteCode.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa un código de invitación",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -45,11 +40,7 @@ const JoinProjectDialog = ({ onJoinProject, loading }: JoinProjectDialogProps) =
         description: "Ahora puedes acceder al proyecto y colaborar con el equipo",
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Código de invitación inválido o expirado",
-        variant: "destructive",
-      });
+      console.error('Error joining project:', error);
     }
   };
 
@@ -91,7 +82,14 @@ const JoinProjectDialog = ({ onJoinProject, loading }: JoinProjectDialogProps) =
               Cancelar
             </Button>
             <Button type="submit" disabled={loading || !inviteCode.trim()}>
-              {loading ? "Uniéndose..." : "Unirse al proyecto"}
+              {loading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Uniéndose...
+                </>
+              ) : (
+                "Unirse al proyecto"
+              )}
             </Button>
           </DialogFooter>
         </form>

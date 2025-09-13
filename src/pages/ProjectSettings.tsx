@@ -42,11 +42,6 @@ const ProjectSettings = () => {
 
   const handleInviteUser = async () => {
     if (!inviteEmail) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa un email",
-        variant: "destructive"
-      });
       return;
     }
 

@@ -76,11 +76,7 @@ const Profile = () => {
       await signOut();
       navigate("/auth");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo cerrar sesión",
-        variant: "destructive"
-      });
+      console.error('Error signing out:', error);
     }
   };
 

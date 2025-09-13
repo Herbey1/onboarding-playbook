@@ -55,11 +55,6 @@ export function useProfile() {
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar el perfil",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
@@ -87,11 +82,7 @@ export function useProfile() {
 
       return data;
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el perfil",
-        variant: "destructive"
-      });
+      console.error('Error updating profile:', error);
       throw error;
     }
   };
@@ -104,11 +95,7 @@ export function useProfile() {
         description: "Ahora tienes acceso a todas las funciones premium"
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el plan",
-        variant: "destructive"
-      });
+      console.error('Error upgrading to premium:', error);
     }
   };
 

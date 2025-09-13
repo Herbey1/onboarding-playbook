@@ -112,11 +112,7 @@ const ProjectManagement = () => {
         description: `Se ha enviado una invitación a ${inviteEmail}`,
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo enviar la invitación",
-        variant: "destructive",
-      });
+      console.error('Error sending invitation:', error);
     }
   };
 
@@ -128,11 +124,7 @@ const ProjectManagement = () => {
         description: "El rol del miembro ha sido actualizado exitosamente",
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el rol del miembro",
-        variant: "destructive",
-      });
+      console.error('Error updating member role:', error);
     }
   };
 
@@ -144,11 +136,7 @@ const ProjectManagement = () => {
         description: "El miembro ha sido eliminado del proyecto",
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar al miembro",
-        variant: "destructive",
-      });
+      console.error('Error removing member:', error);
     }
   };
 
@@ -188,11 +176,7 @@ const ProjectManagement = () => {
         });
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo abandonar el proyecto",
-        variant: "destructive",
-      });
+      console.error('Error leaving project:', error);
     }
   };
 
