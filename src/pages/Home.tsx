@@ -8,44 +8,77 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, BookOpen, Users, Settings, LogOut, User, ChevronDown } from "lucide-react";
+import { Plus, BookOpen, Users, Settings, LogOut, User, ChevronDown, TrendingUp, Target, Clock, Zap, ArrowRight, Star, CheckCircle, Code } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { EmptyState } from "@/components/EmptyStates";
 
-// Mock data for projects - en una implementación real vendría de Supabase
+// Mock data for projects - enhanced with more engaging data
 const mockProjects = [
   {
     id: "1",
     name: "Sistema de Pagos",
-    description: "API REST para procesamiento de pagos con Stripe",
-    stack: ["React", "Node.js", "PostgreSQL", "Docker"],
+    description: "API REST para procesamiento de pagos con Stripe y webhooks",
+    stack: ["React", "Node.js", "PostgreSQL", "Docker", "Stripe"],
     progress: 75,
     status: "published",
     members: 8,
-    lastActivity: "2024-01-15"
+    lastActivity: "2024-01-15",
+    completedModules: 6,
+    totalModules: 8,
+    averageRating: 4.8,
+    daysActive: 15,
+    recentActivity: "2 horas"
   },
   {
     id: "2", 
     name: "Dashboard Analytics",
-    description: "Panel de control con métricas en tiempo real",
-    stack: ["Vue.js", "Python", "Redis", "Kubernetes"],
+    description: "Panel de control con métricas en tiempo real y visualizaciones",
+    stack: ["Vue.js", "Python", "Redis", "Kubernetes", "D3.js"],
     progress: 45,
     status: "draft",
     members: 5,
-    lastActivity: "2024-01-12"
+    lastActivity: "2024-01-12",
+    completedModules: 3,
+    totalModules: 7,
+    averageRating: 4.2,
+    daysActive: 8,
+    recentActivity: "1 día"
   },
   {
     id: "3",
     name: "Mobile App",
-    description: "Aplicación móvil para gestión de inventario",
-    stack: ["React Native", "Firebase", "TypeScript"],
+    description: "Aplicación móvil para gestión de inventario en tiempo real",
+    stack: ["React Native", "Firebase", "TypeScript", "Redux"],
     progress: 90,
     status: "published", 
     members: 12,
-    lastActivity: "2024-01-14"
+    lastActivity: "2024-01-14",
+    completedModules: 9,
+    totalModules: 10,
+    averageRating: 4.9,
+    daysActive: 25,
+    recentActivity: "30 min"
   }
 ];
+
+// Enhanced stack colors with more variety
+const stackColors: Record<string, string> = {
+  "React": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
+  "Node.js": "bg-green-100 text-green-800 border-green-200 hover:bg-green-200",
+  "PostgreSQL": "bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200",
+  "Docker": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
+  "Vue.js": "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200",
+  "Python": "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200",
+  "Redis": "bg-red-100 text-red-800 border-red-200 hover:bg-red-200",
+  "Kubernetes": "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200",
+  "React Native": "bg-cyan-100 text-cyan-800 border-cyan-200 hover:bg-cyan-200",
+  "Firebase": "bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200",
+  "TypeScript": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
+  "Stripe": "bg-violet-100 text-violet-800 border-violet-200 hover:bg-violet-200",
+  "D3.js": "bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-200",
+  "Redux": "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
+};
 
 const Home = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -92,6 +125,38 @@ const Home = () => {
   const getUserInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
   };
+
+  // Enhanced stats for dashboard
+  const dashboardStats = [
+    { 
+      label: "Proyectos Activos", 
+      value: projects.filter(p => p.status === "published").length.toString(),
+      icon: Target, 
+      color: "text-primary",
+      trend: "+2 este mes"
+    },
+    { 
+      label: "Módulos Completados", 
+      value: projects.reduce((sum, p) => sum + p.completedModules, 0).toString(),
+      icon: CheckCircle, 
+      color: "text-success",
+      trend: "+8 esta semana"
+    },
+    { 
+      label: "Miembros Activos", 
+      value: projects.reduce((sum, p) => sum + p.members, 0).toString(),
+      icon: Users, 
+      color: "text-accent",
+      trend: "+5 nuevos"
+    },
+    { 
+      label: "Promedio Calificación", 
+      value: (projects.reduce((sum, p) => sum + p.averageRating, 0) / projects.length).toFixed(1),
+      icon: Star, 
+      color: "text-warning",
+      trend: "Excelente"
+    }
+  ];
 
   if (!user) return null;
 
@@ -163,27 +228,94 @@ const Home = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
+        {/* Welcome Section with Stats */}
         <motion.div 
-          className="flex items-center justify-between mb-8"
+          className="mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          <div>
-            <h2 className="text-stepable-3xl font-bold mb-2">Mis Proyectos</h2>
+          <div className="text-center mb-8">
+            <motion.h2 
+              className="text-stepable-3xl font-bold mb-2 text-gradient-primary"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+            >
+              ¡Bienvenido de vuelta!
+            </motion.h2>
+            <motion.p 
+              className="text-muted-foreground text-stepable-base"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.4 }}
+            >
+              Continúa gestionando el onboarding de tus equipos de desarrollo
+            </motion.p>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {dashboardStats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 + index * 0.1, duration: 0.4 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  className="group"
+                >
+                  <Card className="text-center hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-primary/5 border-2 hover:border-primary/20">
+                    <CardContent className="p-4">
+                      <motion.div
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 mb-3"
+                      >
+                        <Icon className={`h-5 w-5 ${stat.color}`} />
+                      </motion.div>
+                      <div className="text-stepable-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+                        {stat.value}
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-1">{stat.label}</div>
+                      <div className="text-xs text-accent font-medium">{stat.trend}</div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Projects Header with Quick Actions */}
+        <motion.div 
+          className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+        >
+          <div className="flex-1">
+            <h3 className="text-stepable-2xl font-bold mb-2">Mis Proyectos</h3>
             <p className="text-muted-foreground">
-              Gestiona el onboarding de tus equipos de desarrollo
+              Gestiona y monitorea el progreso de tus proyectos de onboarding
             </p>
           </div>
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Button onClick={handleCreateProject} className="stepable-button hover-glow">
-              <Plus className="mr-2 h-4 w-4" />
-              Crear proyecto
-            </Button>
-          </motion.div>
+          
+          <div className="flex gap-3">
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button variant="outline" className="hover-glow">
+                <Code className="mr-2 h-4 w-4" />
+                Unirse por código
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button onClick={handleCreateProject} className="stepable-button hover-glow bg-gradient-to-r from-primary to-secondary text-white border-0">
+                <Plus className="mr-2 h-4 w-4" />
+                Crear proyecto
+              </Button>
+            </motion.div>
+          </div>
         </motion.div>
 
         {projects.length > 0 ? (
@@ -313,7 +445,7 @@ const Home = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
+            transition={{ delay: 0.9, duration: 0.5 }}
           >
             <EmptyState
               variant="projects"

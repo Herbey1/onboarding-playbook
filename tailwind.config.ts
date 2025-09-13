@@ -69,6 +69,18 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -116,6 +128,35 @@ export default {
           "0%, 100%": { transform: "rotate(0deg)" },
           "25%": { transform: "rotate(1deg)" },
           "75%": { transform: "rotate(-1deg)" },
+        },
+        "glow": {
+          "0%, 100%": { 
+            opacity: "1",
+            boxShadow: "0 0 20px hsl(var(--primary) / 0.3)"
+          },
+          "50%": { 
+            opacity: "0.8",
+            boxShadow: "0 0 30px hsl(var(--primary) / 0.5)"
+          },
+        },
+        "card-hover": {
+          "0%": { 
+            transform: "translateY(0) scale(1)",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
+          },
+          "100%": { 
+            transform: "translateY(-4px) scale(1.02)",
+            boxShadow: "0 10px 25px rgba(117, 146, 225, 0.15)"
+          },
+        },
+        "progress-fill": {
+          "0%": { width: "0%" },
+          "100%": { width: "var(--progress-width)" },
+        },
+        "typing": {
+          "0%": { width: "0" },
+          "50%": { width: "100%" },
+          "100%": { width: "0" },
         }
       },
       animation: {
@@ -129,6 +170,10 @@ export default {
         "pulse-glow": "pulse-glow 2s infinite",
         "bounce-subtle": "bounce-subtle 2s infinite",
         "wiggle": "wiggle 0.5s ease-in-out",
+        "glow": "glow 2s ease-in-out infinite",
+        "card-hover": "card-hover 0.3s ease-out forwards",
+        "progress-fill": "progress-fill 1s ease-out forwards",
+        "typing": "typing 3s steps(40, end) infinite",
       },
     },
   },
