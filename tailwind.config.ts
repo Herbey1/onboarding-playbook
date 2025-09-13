@@ -13,6 +13,18 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        nunito: ['Nunito', 'sans-serif'],
+      },
+      fontSize: {
+        'stepable-sm': '0.75rem',
+        'stepable-base': '1rem', 
+        'stepable-xl': '1.333rem',
+        'stepable-2xl': '1.777rem',
+        'stepable-3xl': '2.369rem',
+        'stepable-4xl': '3.158rem',
+        'stepable-5xl': '4.210rem',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
