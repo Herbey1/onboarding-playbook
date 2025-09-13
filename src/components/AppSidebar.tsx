@@ -102,7 +102,7 @@ export function AppSidebar() {
   const getNavCls = (isActiveState: boolean) =>
     `transition-all duration-300 rounded-xl ${
       isActiveState 
-        ? "bg-gradient-to-r from-primary to-secondary text-white shadow-medium" 
+        ? "bg-primary text-primary-foreground shadow-soft" 
         : "hover:bg-muted/80 hover:shadow-soft text-muted-foreground hover:text-foreground"
     }`;
 
@@ -117,29 +117,30 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={`${collapsed ? "w-16" : "w-72"} transition-all duration-300 border-r border-border/50 bg-gradient-subtle backdrop-blur-sm`}
+      className={`${collapsed ? "w-16" : "w-72"} transition-all duration-300 border-r border-border/50 bg-sidebar/95 backdrop-blur-sm overflow-hidden`}
       collapsible="icon"
     >
-      <SidebarContent className="p-4">
+      <SidebarContent className="p-4 h-full overflow-y-auto overflow-x-hidden">
         {/* Logo Header */}
         <motion.div 
-          className="flex items-center gap-3 mb-8 px-2"
+          className="flex items-center gap-3 mb-8 px-2 min-h-[3rem] overflow-hidden"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-secondary flex items-center justify-center shadow-medium">
-            <Lightbulb className="h-5 w-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-soft shrink-0">
+            <Lightbulb className="h-5 w-5 text-primary-foreground" />
           </div>
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {!collapsed && (
               <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden whitespace-nowrap"
               >
-                <h1 className="text-stepable-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                <h1 className="text-stepable-xl font-bold text-primary">
                   Stepable
                 </h1>
                 <p className="text-xs text-muted-foreground">Plataforma de onboarding</p>
@@ -149,13 +150,15 @@ export function AppSidebar() {
         </motion.div>
 
         {/* Main Navigation */}
-        <SidebarGroup>
-          <AnimatePresence>
+        <SidebarGroup className="overflow-hidden">
+          <AnimatePresence mode="wait">
             {!collapsed && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
               >
                 <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground mb-3 px-2">
                   NAVEGACIÓN PRINCIPAL
@@ -164,7 +167,7 @@ export function AppSidebar() {
             )}
           </AnimatePresence>
           
-          <SidebarGroupContent>
+          <SidebarGroupContent className="overflow-hidden">
             <SidebarMenu className="space-y-2">
               {mainMenuItems.map((item, index) => {
                 const isActiveState = isActive(item.url);
@@ -194,21 +197,22 @@ export function AppSidebar() {
                             className="flex items-center gap-3 p-3"
                           >
                             <Icon className={`h-5 w-5 ${isActiveState ? 'text-white' : ''}`} />
-                            <AnimatePresence>
+                            <AnimatePresence mode="wait">
                               {!collapsed && (
                                 <motion.div
-                                  initial={{ opacity: 0, x: -10 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  exit={{ opacity: 0, x: -10 }}
-                                  className="flex-1"
+                                  initial={{ opacity: 0, width: 0 }}
+                                  animate={{ opacity: 1, width: "auto" }}
+                                  exit={{ opacity: 0, width: 0 }}
+                                  transition={{ duration: 0.3 }}
+                                  className="flex-1 overflow-hidden min-w-0"
                                 >
-                                  <div className="font-medium">{item.title}</div>
+                                  <div className="font-medium truncate">{item.title}</div>
                                   {hoveredItem === item.url && (
                                     <motion.div
                                       initial={{ opacity: 0, height: 0 }}
                                       animate={{ opacity: 1, height: "auto" }}
                                       exit={{ opacity: 0, height: 0 }}
-                                      className="text-xs text-opacity-80 mt-1"
+                                      className="text-xs opacity-80 mt-1 truncate"
                                     >
                                       {item.description}
                                     </motion.div>

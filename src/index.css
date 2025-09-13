@@ -6,12 +6,12 @@
 
 @layer base {
   :root {
-    /* Enhanced Stepable Brand Colors - More Vibrant */
-    --stepable-text: 220 25% 2%;          /* Deeper black */
-    --stepable-background: 220 60% 96%;    /* Cleaner white-blue */
-    --stepable-primary: 229 85% 65%;       /* More vibrant blue */
-    --stepable-secondary: 229 95% 50%;     /* Richer blue */
-    --stepable-accent: 188 75% 55%;        /* More vivid cyan */
+    /* Stepable Brand Colors - Opaque Blues */
+    --stepable-text: 220 25% 8%;          /* Softer black */
+    --stepable-background: 220 20% 98%;    /* Subtle blue-white */
+    --stepable-primary: 220 60% 45%;       /* Deep navy blue */
+    --stepable-secondary: 220 40% 35%;     /* Darker blue */
+    --stepable-accent: 210 50% 55%;        /* Muted blue accent */
     
     /* Semantic Colors */
     --stepable-success: 160 84% 39%;       /* emerald-600 */
@@ -61,10 +61,10 @@
     
     --radius: 0.5rem;
     
-    /* Custom Stepable Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--stepable-primary)), hsl(var(--stepable-secondary)));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--stepable-accent)), hsl(var(--stepable-primary)));
-    --gradient-subtle: linear-gradient(180deg, hsl(var(--stepable-background)), hsl(var(--stepable-neutral-50)));
+    /* Minimal Stepable Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--stepable-primary) / 0.15), hsl(var(--stepable-secondary) / 0.1));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--stepable-accent) / 0.1), hsl(var(--stepable-primary) / 0.05));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--stepable-background)), hsl(var(--stepable-neutral-50) / 0.3));
     
     /* Apple-style Enhanced Shadows */
     --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -84,7 +84,7 @@
     --glass-backdrop: blur(12px);
     
     /* Sidebar */
-    --sidebar-background: var(--stepable-neutral-50);
+    --sidebar-background: hsl(var(--stepable-background));
     --sidebar-foreground: var(--stepable-text);
     --sidebar-primary: var(--stepable-primary);
     --sidebar-primary-foreground: 0 0% 100%;
