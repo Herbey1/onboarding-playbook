@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, BookOpen, Users, Settings, LogOut, User, ChevronDown, TrendingUp, Target, Clock, Zap, ArrowRight, Star, CheckCircle, Code } from "lucide-react";
+import { Plus, BookOpen, Code, TrendingUp, Target, Clock, Zap, ArrowRight, Star, CheckCircle, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { EmptyState } from "@/components/EmptyStates";
@@ -107,23 +105,11 @@ const Home = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Sesión cerrada",
-      description: "Hasta la próxima",
-    });
-  };
-
   const handleCreateProject = () => {
     toast({
       title: "Próximamente",
       description: "La creación de proyectos estará disponible pronto",
     });
-  };
-
-  const getUserInitials = (email: string) => {
-    return email.substring(0, 2).toUpperCase();
   };
 
   // Enhanced stats for dashboard
@@ -162,70 +148,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      {/* Top Bar */}
-      <motion.header 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="glass border-b border-border shadow-soft sticky top-0 z-10"
-      >
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <motion.div 
-              className="flex items-center space-x-4"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
-            >
-              <h1 className="text-stepable-2xl font-bold gradient-primary bg-clip-text text-transparent">
-                Stepable
-              </h1>
-              <Badge variant="secondary" className="hidden sm:inline-flex hover-scale">
-                Proyectos
-              </Badge>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 hover-glow">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="" />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {getUserInitials(user.email || "")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden sm:inline">{user.email}</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <User className="mr-2 h-4 w-4" />
-                    Perfil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Configuración
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar sesión
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </motion.div>
-          </div>
-        </div>
-      </motion.header>
-
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         {/* Welcome Section with Stats */}

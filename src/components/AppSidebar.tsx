@@ -1,0 +1,415 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Home, 
+  BookOpen, 
+  Users, 
+  Settings, 
+  User,
+  Library,
+  Puzzle,
+  Target,
+  BarChart3,
+  Lightbulb,
+  ChevronRight,
+  LogOut
+} from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+
+const mainMenuItems = [
+  { 
+    title: "Dashboard", 
+    url: "/", 
+    icon: Home,
+    description: "Resumen y estadísticas generales"
+  },
+  { 
+    title: "Biblioteca", 
+    url: "/library", 
+    icon: Library,
+    description: "Documentos y recursos"
+  },
+  { 
+    title: "Integraciones", 
+    url: "/integrations", 
+    icon: Puzzle,
+    description: "Conecta herramientas externas"
+  }
+];
+
+const projectMenuItems = [
+  { 
+    title: "Plan de Formación", 
+    url: "/project/1/onboarding", 
+    icon: Target,
+    description: "Módulos de onboarding"
+  },
+  { 
+    title: "Análisis", 
+    url: "/project/1/analytics", 
+    icon: BarChart3,
+    description: "Métricas y progreso"
+  },
+  { 
+    title: "Configuración", 
+    url: "/project/1/settings", 
+    icon: Settings,
+    description: "Ajustes del proyecto"
+  }
+];
+
+const userMenuItems = [
+  { 
+    title: "Mi Perfil", 
+    url: "/profile", 
+    icon: User,
+    description: "Información personal"
+  }
+];
+
+export function AppSidebar() {
+  const { state } = useSidebar();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  
+  const currentPath = location.pathname;
+  const collapsed = state === "collapsed";
+  
+  const isActive = (path: string) => {
+    if (path === "/") return currentPath === path;
+    return currentPath.startsWith(path);
+  };
+  
+  const getNavCls = (isActiveState: boolean) =>
+    `transition-all duration-300 rounded-xl ${
+      isActiveState 
+        ? "bg-gradient-to-r from-primary to-secondary text-white shadow-medium" 
+        : "hover:bg-muted/80 hover:shadow-soft text-muted-foreground hover:text-foreground"
+    }`;
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+    toast({
+      title: "Sesión cerrada",
+      description: "Hasta la próxima",
+    });
+  };
+
+  return (
+    <Sidebar
+      className={`${collapsed ? "w-16" : "w-72"} transition-all duration-300 border-r border-border/50 bg-gradient-subtle backdrop-blur-sm`}
+      collapsible="icon"
+    >
+      <SidebarContent className="p-4">
+        {/* Logo Header */}
+        <motion.div 
+          className="flex items-center gap-3 mb-8 px-2"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-secondary flex items-center justify-center shadow-medium">
+            <Lightbulb className="h-5 w-5 text-white" />
+          </div>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h1 className="text-stepable-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Stepable
+                </h1>
+                <p className="text-xs text-muted-foreground">Plataforma de onboarding</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Main Navigation */}
+        <SidebarGroup>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground mb-3 px-2">
+                  NAVEGACIÓN PRINCIPAL
+                </SidebarGroupLabel>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-2">
+              {mainMenuItems.map((item, index) => {
+                const isActiveState = isActive(item.url);
+                const Icon = item.icon;
+                
+                return (
+                  <motion.div
+                    key={item.url}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 * index, duration: 0.3 }}
+                  >
+                    <SidebarMenuItem>
+                      <SidebarMenuButton 
+                        asChild
+                        onMouseEnter={() => setHoveredItem(item.url)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                      >
+                        <NavLink 
+                          to={item.url} 
+                          end={item.url === "/"}
+                          className={getNavCls(isActiveState)}
+                        >
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-3 p-3"
+                          >
+                            <Icon className={`h-5 w-5 ${isActiveState ? 'text-white' : ''}`} />
+                            <AnimatePresence>
+                              {!collapsed && (
+                                <motion.div
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: -10 }}
+                                  className="flex-1"
+                                >
+                                  <div className="font-medium">{item.title}</div>
+                                  {hoveredItem === item.url && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: "auto" }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      className="text-xs text-opacity-80 mt-1"
+                                    >
+                                      {item.description}
+                                    </motion.div>
+                                  )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                            {isActiveState && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                              >
+                                <ChevronRight className="h-4 w-4 text-white" />
+                              </motion.div>
+                            )}
+                          </motion.div>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </motion.div>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Project Navigation */}
+        <SidebarGroup className="mt-6">
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground mb-3 px-2">
+                  PROYECTO ACTUAL
+                </SidebarGroupLabel>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-2">
+              {projectMenuItems.map((item, index) => {
+                const isActiveState = isActive(item.url);
+                const Icon = item.icon;
+                
+                return (
+                  <motion.div
+                    key={item.url}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + 0.1 * index, duration: 0.3 }}
+                  >
+                    <SidebarMenuItem>
+                      <SidebarMenuButton 
+                        asChild
+                        onMouseEnter={() => setHoveredItem(item.url)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                      >
+                        <NavLink 
+                          to={item.url} 
+                          className={getNavCls(isActiveState)}
+                        >
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-3 p-3"
+                          >
+                            <Icon className={`h-5 w-5 ${isActiveState ? 'text-white' : ''}`} />
+                            <AnimatePresence>
+                              {!collapsed && (
+                                <motion.div
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: -10 }}
+                                  className="flex-1"
+                                >
+                                  <div className="font-medium">{item.title}</div>
+                                  {hoveredItem === item.url && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: "auto" }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      className="text-xs text-opacity-80 mt-1"
+                                    >
+                                      {item.description}
+                                    </motion.div>
+                                  )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                            {isActiveState && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                              >
+                                <ChevronRight className="h-4 w-4 text-white" />
+                              </motion.div>
+                            )}
+                          </motion.div>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </motion.div>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* User Section */}
+        <div className="mt-auto pt-6">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-2">
+                {userMenuItems.map((item, index) => {
+                  const isActiveState = isActive(item.url);
+                  const Icon = item.icon;
+                  
+                  return (
+                    <motion.div
+                      key={item.url}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 + 0.1 * index, duration: 0.3 }}
+                    >
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                          <NavLink 
+                            to={item.url} 
+                            className={getNavCls(isActiveState)}
+                          >
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-3 p-3"
+                            >
+                              <Icon className={`h-5 w-5 ${isActiveState ? 'text-white' : ''}`} />
+                              <AnimatePresence>
+                                {!collapsed && (
+                                  <motion.span
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="font-medium"
+                                  >
+                                    {item.title}
+                                  </motion.span>
+                                )}
+                              </AnimatePresence>
+                            </motion.div>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </motion.div>
+                  );
+                })}
+                
+                {/* Logout Button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.3 }}
+                >
+                  <SidebarMenuItem>
+                    <Button
+                      variant="ghost"
+                      onClick={handleLogout}
+                      className="w-full justify-start p-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-xl"
+                    >
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center gap-3"
+                      >
+                        <LogOut className="h-5 w-5" />
+                        <AnimatePresence>
+                          {!collapsed && (
+                            <motion.span
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -10 }}
+                              className="font-medium"
+                            >
+                              Cerrar sesión
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    </Button>
+                  </SidebarMenuItem>
+                </motion.div>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </div>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
