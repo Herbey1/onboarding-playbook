@@ -149,234 +149,234 @@ const Home = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Welcome Section with Stats */}
-        <motion.div 
-          className="mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          <div className="text-center mb-8">
-            <motion.h2 
-              className="text-stepable-3xl font-bold mb-2 text-gradient-primary"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-            >
-              ¡Bienvenido de vuelta!
-            </motion.h2>
-            <motion.p 
-              className="text-muted-foreground text-stepable-base"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
-            >
-              Continúa gestionando el onboarding de tus equipos de desarrollo
-            </motion.p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {dashboardStats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 + index * 0.1, duration: 0.4 }}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  className="group"
-                >
-                  <Card className="text-center hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-primary/5 border-2 hover:border-primary/20">
-                    <CardContent className="p-4">
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 mb-3"
-                      >
-                        <Icon className={`h-5 w-5 ${stat.color}`} />
-                      </motion.div>
-                      <div className="text-stepable-2xl font-bold text-foreground group-hover:text-primary transition-colors">
-                        {stat.value}
-                      </div>
-                      <div className="text-sm text-muted-foreground mb-1">{stat.label}</div>
-                      <div className="text-xs text-accent font-medium">{stat.trend}</div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Projects Header with Quick Actions */}
-        <motion.div 
-          className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-        >
-          <div className="flex-1">
-            <h3 className="text-stepable-2xl font-bold mb-2">Mis Proyectos</h3>
-            <p className="text-muted-foreground">
-              Gestiona y monitorea el progreso de tus proyectos de onboarding
-            </p>
-          </div>
-          
-          <div className="flex gap-3">
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button variant="outline" className="hover-glow">
-                <Code className="mr-2 h-4 w-4" />
-                Unirse por código
-              </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button variant="blue" onClick={handleCreateProject} className="shadow-glow animate-glow-pulse">
-                <Plus className="mr-2 h-4 w-4" />
-                Crear proyecto
-              </Button>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {projects.length > 0 ? (
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      <motion.div 
+        className="mb-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+      >
+        <div className="text-center mb-8">
+          <motion.h2 
+            className="text-stepable-3xl font-bold mb-2 text-gradient-primary"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+          >
+            ¡Bienvenido de vuelta!
+          </motion.h2>
+          <motion.p 
+            className="text-muted-foreground text-stepable-base"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
           >
-            {projects.map((project, index) => (
+            Continúa gestionando el onboarding de tus equipos de desarrollo
+          </motion.p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {dashboardStats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
               <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  delay: 0.7 + index * 0.1,
-                  duration: 0.4,
-                  ease: "easeOut"
-                }}
-                whileHover={{ 
-                  y: -8,
-                  transition: { duration: 0.2, ease: "easeOut" }
-                }}
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 + index * 0.1, duration: 0.4 }}
+                whileHover={{ scale: 1.02, y: -2 }}
                 className="group"
               >
-                <Card
-                  className="stepable-card hover:shadow-strong cursor-pointer group h-full bg-card/80 backdrop-blur-sm border-0 transition-all duration-300"
-                  onClick={() => navigate(`/project/${project.id}`)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-stepable-xl group-hover:text-primary transition-colors duration-200">
-                          {project.name}
-                        </CardTitle>
-                        <CardDescription className="mt-2">
-                          {project.description}
-                        </CardDescription>
-                      </div>
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        className="ml-2"
-                      >
-                        <Badge 
-                          variant={project.status === "published" ? "default" : "secondary"}
-                          className="hover-scale transition-transform duration-200"
-                        >
-                          {project.status === "published" ? "Publicado" : "Borrador"}
-                        </Badge>
-                      </motion.div>
+                <Card className="text-center hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-primary/5 border-2 hover:border-primary/20">
+                  <CardContent className="p-4">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 mb-3"
+                    >
+                      <Icon className={`h-5 w-5 ${stat.color}`} />
+                    </motion.div>
+                    <div className="text-stepable-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+                      {stat.value}
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* Stack */}
-                      <div>
-                        <p className="text-sm font-medium mb-2">Stack tecnológico</p>
-                        <motion.div 
-                          className="flex flex-wrap gap-1"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 1 + index * 0.1 }}
-                        >
-                          {project.stack.map((tech, techIndex) => (
-                            <motion.div
-                              key={tech}
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ 
-                                delay: 1.1 + index * 0.1 + techIndex * 0.05,
-                                type: "spring",
-                                stiffness: 300,
-                                damping: 20
-                              }}
-                            >
-                              <Badge 
-                                variant="outline" 
-                                className="text-xs hover-scale transition-transform duration-200"
-                              >
-                                {tech}
-                              </Badge>
-                            </motion.div>
-                          ))}
-                        </motion.div>
-                      </div>
-
-                      {/* Progress */}
-                      {project.status === "published" && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 1.2 + index * 0.1 }}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-sm font-medium">Progreso del onboarding</p>
-                            <span className="text-sm text-muted-foreground font-medium text-primary">
-                              {project.progress}%
-                            </span>
-                          </div>
-                          <Progress value={project.progress} className="stepable-progress h-3" />
-                        </motion.div>
-                      )}
-
-                      {/* Metadata */}
-                      <motion.div 
-                        className="flex items-center justify-between text-sm text-muted-foreground"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1.3 + index * 0.1 }}
-                      >
-                        <div className="flex items-center space-x-1 hover:text-foreground transition-colors">
-                          <Users className="h-4 w-4" />
-                          <span>{project.members} miembros</span>
-                        </div>
-                        <div className="flex items-center space-x-1 hover:text-foreground transition-colors">
-                          <BookOpen className="h-4 w-4" />
-                          <span>Últ. actividad: {new Date(project.lastActivity).toLocaleDateString()}</span>
-                        </div>
-                      </motion.div>
-                    </div>
+                    <div className="text-sm text-muted-foreground mb-1">{stat.label}</div>
+                    <div className="text-xs text-accent font-medium">{stat.trend}</div>
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Projects Header with Quick Actions */}
+      <motion.div 
+        className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8, duration: 0.5 }}
+      >
+        <div className="flex-1">
+          <h3 className="text-stepable-2xl font-bold mb-2">Mis Proyectos</h3>
+          <p className="text-muted-foreground">
+            Gestiona y monitorea el progreso de tus proyectos de onboarding
+          </p>
+        </div>
+        
+        <div className="flex gap-3">
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button variant="outline" className="hover-glow">
+              <Code className="mr-2 h-4 w-4" />
+              Unirse por código
+            </Button>
           </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.5 }}
-          >
-            <EmptyState
-              variant="projects"
-              title="¡Crea tu primer proyecto!"
-              description="Comienza subiendo las guías de tu equipo y genera un plan de onboarding personalizado para nuevos desarrolladores."
-              actionLabel="Crear proyecto"
-              onAction={handleCreateProject}
-            />
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button variant="blue" onClick={handleCreateProject} className="shadow-glow animate-glow-pulse">
+              <Plus className="mr-2 h-4 w-4" />
+              Crear proyecto
+            </Button>
           </motion.div>
-        )}
-      </div>
+        </div>
+      </motion.div>
+
+      {/* Projects Grid or Empty State */}
+      {projects.length > 0 ? (
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          {projects.map((project, index) => (
+            <motion.div
+              key={project.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ 
+                delay: 0.7 + index * 0.1,
+                duration: 0.4,
+                ease: "easeOut"
+              }}
+              whileHover={{ 
+                y: -8,
+                transition: { duration: 0.2, ease: "easeOut" }
+              }}
+              className="group"
+            >
+              <Card
+                className="stepable-card hover:shadow-strong cursor-pointer group h-full bg-card/80 backdrop-blur-sm border-0 transition-all duration-300"
+                onClick={() => navigate(`/project/${project.id}`)}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-stepable-xl group-hover:text-primary transition-colors duration-200">
+                        {project.name}
+                      </CardTitle>
+                      <CardDescription className="mt-2">
+                        {project.description}
+                      </CardDescription>
+                    </div>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className="ml-2"
+                    >
+                      <Badge 
+                        variant={project.status === "published" ? "default" : "secondary"}
+                        className="hover-scale transition-transform duration-200"
+                      >
+                        {project.status === "published" ? "Publicado" : "Borrador"}
+                      </Badge>
+                    </motion.div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Stack */}
+                    <div>
+                      <p className="text-sm font-medium mb-2">Stack tecnológico</p>
+                      <motion.div 
+                        className="flex flex-wrap gap-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1 + index * 0.1 }}
+                      >
+                        {project.stack.map((tech, techIndex) => (
+                          <motion.div
+                            key={tech}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ 
+                              delay: 1.1 + index * 0.1 + techIndex * 0.05,
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 20
+                            }}
+                          >
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs hover-scale transition-transform duration-200"
+                            >
+                              {tech}
+                            </Badge>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    </div>
+
+                    {/* Progress */}
+                    {project.status === "published" && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.2 + index * 0.1 }}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-medium">Progreso del onboarding</p>
+                          <span className="text-sm text-muted-foreground font-medium text-primary">
+                            {project.progress}%
+                          </span>
+                        </div>
+                        <Progress value={project.progress} className="stepable-progress h-3" />
+                      </motion.div>
+                    )}
+
+                    {/* Metadata */}
+                    <motion.div 
+                      className="flex items-center justify-between text-sm text-muted-foreground"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.3 + index * 0.1 }}
+                    >
+                      <div className="flex items-center space-x-1 hover:text-foreground transition-colors">
+                        <Users className="h-4 w-4" />
+                        <span>{project.members} miembros</span>
+                      </div>
+                      <div className="flex items-center space-x-1 hover:text-foreground transition-colors">
+                        <Clock className="h-4 w-4" />
+                        <span>{project.recentActivity}</span>
+                      </div>
+                    </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.5 }}
+        >
+          <EmptyState
+            variant="projects"
+            title="¡Crea tu primer proyecto!"
+            description="Comienza subiendo las guías de tu equipo y genera un plan de onboarding personalizado para nuevos desarrolladores."
+            actionLabel="Crear proyecto"
+            onAction={handleCreateProject}
+          />
+        </motion.div>
+      )}
     </div>
   );
 };
