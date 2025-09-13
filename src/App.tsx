@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import NotFound from "./pages/NotFound";
+import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
@@ -60,7 +61,7 @@ const App = () => (
             <Route path="onboarding/player" element={<OnboardingPlayer />} />
             <Route path="integrations" element={<Integrations />} />
             <Route path="settings" element={<ProjectSettings />} />
-            <Route path="analytics" element={<div className="p-8"><h1 className="text-2xl font-bold">Analytics - Coming Soon</h1></div>} />
+            <Route path="analytics" element={<Analytics />} />
             <Route index element={<Library />} />
           </Route>
           <Route path="*" element={<NotFound />} />
