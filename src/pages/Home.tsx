@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/EmptyStates";
 import ProjectCard from "@/components/ProjectCard";
 import CreateProjectDialog, { type ProjectDocumentation } from "@/components/CreateProjectDialog";
 import JoinProjectDialog from "@/components/JoinProjectDialog";
-import { useProjectActions } from "@/hooks/useProjectActions";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
@@ -28,10 +28,10 @@ const projectMembersCache = new Map();
 
 const Home = () => {
   const { user, loading: authLoading } = useAuth();
-  const { projects, loading: projectsLoading, createProject } = useProjects();
-  const { handleDeleteProject, handleLeaveProject, handleJoinProject, loading: actionLoading } = useProjectActions();
+  const { projects, loading: projectsLoading, createProject, deleteProject, leaveProject, joinProjectByCode } = useProjects();
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [leaveProjectId, setLeaveProjectId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -48,21 +48,48 @@ const Home = () => {
   };
 
   const onDeleteProject = async (projectId: string) => {
-    const success = await handleDeleteProject(projectId);
-    if (success) {
+    setActionLoading(true);
+    try {
+      await deleteProject(projectId);
+      toast({
+        title: "Proyecto eliminado",
+        description: "El proyecto ha sido eliminado exitosamente"
+      });
       setDeleteProjectId(null);
+    } catch (error) {
+      console.error('Error deleting project:', error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const onLeaveProject = async (projectId: string) => {
-    const success = await handleLeaveProject(projectId);
-    if (success) {
-      setLeaveProjectId(null);
+    setActionLoading(true);
+    try {
+      const success = await leaveProject(projectId);
+      if (success) {
+        toast({
+          title: "Has salido del proyecto",
+          description: "Ya no formas parte de este proyecto"
+        });
+        setLeaveProjectId(null);
+      }
+    } catch (error) {
+      console.error('Error leaving project:', error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const onJoinProject = async (inviteCode: string) => {
-    await handleJoinProject(inviteCode);
+    setActionLoading(true);
+    try {
+      await joinProjectByCode(inviteCode);
+    } catch (error) {
+      console.error('Error joining project:', error);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // Calculate real dashboard stats

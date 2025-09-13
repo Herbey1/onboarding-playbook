@@ -268,10 +268,10 @@ export function useProjects() {
         };
         const activities = await geminiService.generateActivities(name, description, docs);
         const mergedSettings = {
-          ...(project.settings || {}),
+          ...(typeof project.settings === 'object' && project.settings !== null ? project.settings : {}),
           activities: activities.activities,
           activities_generated_at: new Date().toISOString()
-        };
+        } as any;
         const upd = await supabase
           .from('projects')
           .update({ settings: mergedSettings, updated_at: new Date().toISOString() })
@@ -323,10 +323,10 @@ export function useProjects() {
 
       const gen = await geminiService.generateActivities(project.name, project.description || '', docs);
       const mergedSettings = {
-        ...(project.settings || {}),
+        ...(typeof project.settings === 'object' && project.settings !== null ? project.settings : {}),
         activities: gen.activities,
         activities_generated_at: new Date().toISOString()
-      };
+      } as any;
 
       const { error: updErr } = await supabase
         .from('projects')

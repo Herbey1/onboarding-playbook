@@ -72,12 +72,12 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const currentPath = location.pathname;
+  
   // Try to infer current projectId from the path: /project/:id/...
   const projectIdMatch = currentPath.match(/^\/project\/([^/]+)/);
   const currentProjectId = projectIdMatch?.[1];
   const projectMenuItems = buildProjectMenu(currentProjectId);
-
-  const currentPath = location.pathname;
   const collapsed = state === "collapsed";
   
   const isActive = (path: string) => {
