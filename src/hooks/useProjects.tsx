@@ -48,17 +48,12 @@ export function useProjects() {
       setLoading(true);
       const { data, error } = await supabase
         .from('projects')
-        .select(`
-          *,
-          project_members!inner(
-            role,
-            profiles(email, full_name)
-          )
-        `);
+        .select('*');
 
       if (error) throw error;
       setProjects(data || []);
     } catch (error: any) {
+      console.error('Error fetching projects:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los proyectos",
@@ -84,16 +79,10 @@ export function useProjects() {
         .select()
         .single();
 
-      if (error) throw error;
-
-      // Add creator as owner member
-      await supabase
-        .from('project_members')
-        .insert({
-          project_id: data.id,
-          user_id: user.id,
-          role: 'owner'
-        });
+      if (error) {
+        console.error('Error creating project:', error);
+        throw error;
+      }
 
       toast({
         title: "Proyecto creado",
@@ -103,6 +92,7 @@ export function useProjects() {
       fetchProjects();
       return data;
     } catch (error: any) {
+      console.error('Create project error:', error);
       toast({
         title: "Error",
         description: "No se pudo crear el proyecto",
