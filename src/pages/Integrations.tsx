@@ -97,26 +97,28 @@ const Integrations = () => {
   ];
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-stepable-3xl font-bold">Integraciones</h1>
-        <p className="text-muted-foreground mt-1">
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-stepable-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Integraciones
+        </h1>
+        <p className="text-muted-foreground text-stepable-base">
           Conecta GitHub y otras herramientas para mejorar el onboarding
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* GitHub Integration */}
-        <Card className="stepable-card">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
-                  <Github className="h-6 w-6 text-white" />
+        <Card className="apple-card border-2 hover:border-primary/20 transition-all duration-300">
+          <CardHeader className="pb-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gray-900 rounded-xl flex items-center justify-center shadow-medium">
+                  <Github className="h-7 w-7 text-white" />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <CardTitle className="text-stepable-xl">GitHub</CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-stepable-base">
                     Conecta repositorios para guardrails automáticos
                   </CardDescription>
                 </div>
@@ -124,21 +126,21 @@ const Integrations = () => {
               
               <div className="flex items-center space-x-3">
                 {integration.github.connected ? (
-                  <Badge variant="default" className="flex items-center space-x-1">
-                    <CheckCircle className="h-3 w-3" />
+                  <Badge variant="default" className="flex items-center space-x-2 px-3 py-1">
+                    <CheckCircle className="h-4 w-4" />
                     <span>Conectado</span>
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="flex items-center space-x-1">
-                    <AlertCircle className="h-3 w-3" />
+                  <Badge variant="secondary" className="flex items-center space-x-2 px-3 py-1">
+                    <AlertCircle className="h-4 w-4" />
                     <span>Desconectado</span>
                   </Badge>
                 )}
                 
                 <Button 
                   onClick={handleConnectGitHub}
-                  variant={integration.github.connected ? "outline" : "default"}
-                  className="stepable-button"
+                  variant={integration.github.connected ? "outline" : "blue"}
+                  className="shadow-soft hover:shadow-medium transition-all duration-200"
                 >
                   {integration.github.connected ? (
                     <>
@@ -156,57 +158,64 @@ const Integrations = () => {
             </div>
           </CardHeader>
           
-          <CardContent>
+          <CardContent className="pt-0">
             {!integration.github.connected ? (
-              <div className="text-center py-8">
-                <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                  <Github className="h-8 w-8 text-muted-foreground" />
+              <div className="text-center py-12">
+                <div className="mx-auto w-20 h-20 bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center mb-6 shadow-soft">
+                  <Github className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-stepable-xl font-semibold mb-2">
+                <h3 className="text-stepable-2xl font-semibold mb-3">
                   Conecta tu organización de GitHub
                 </h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                <p className="text-muted-foreground mb-8 max-w-md mx-auto text-stepable-base leading-relaxed">
                   La integración con GitHub es opcional pero permite aplicar guardrails 
                   automáticos para guiar a nuevos desarrolladores.
                 </p>
-                <Button onClick={handleConnectGitHub} className="stepable-button">
-                  <Github className="mr-2 h-4 w-4" />
+                <Button variant="blue" onClick={handleConnectGitHub} className="shadow-medium hover:shadow-strong">
+                  <Github className="mr-2 h-5 w-5" />
                   Conectar con GitHub
                 </Button>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {/* Repository Selection */}
-                <div>
-                  <h4 className="font-semibold mb-3">Repositorios seleccionados</h4>
-                  <div className="text-sm text-muted-foreground">
-                    No hay repositorios conectados. 
-                    <Button variant="link" className="p-0 h-auto text-primary">
+                <div className="space-y-4">
+                  <h4 className="text-stepable-xl font-semibold">Repositorios seleccionados</h4>
+                  <div className="p-4 bg-muted/30 rounded-xl border border-dashed border-muted-foreground/20">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      No hay repositorios conectados.
+                    </p>
+                    <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground">
+                      <ExternalLink className="mr-2 h-4 w-4" />
                       Seleccionar repositorios
                     </Button>
                   </div>
                 </div>
 
                 {/* Guardrails Configuration */}
-                <div>
-                  <h4 className="font-semibold mb-3">Guardrails disponibles</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Selecciona qué validaciones aplicar automáticamente en los PRs
-                  </p>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <h4 className="text-stepable-xl font-semibold">Guardrails disponibles</h4>
+                    <p className="text-muted-foreground text-stepable-base">
+                      Selecciona qué validaciones aplicar automáticamente en los PRs
+                    </p>
+                  </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {guardrailsConfig.map((guardrail) => (
                       <div 
                         key={guardrail.id}
-                        className="flex items-start space-x-3 p-3 border border-border rounded-lg"
+                        className="flex items-start space-x-4 p-4 border border-border rounded-xl hover:bg-muted/30 transition-all duration-200 group"
                       >
-                        <div className="flex items-center space-x-2 flex-1">
-                          <guardrail.icon className="h-4 w-4 text-muted-foreground" />
-                          <div className="flex-1">
-                            <Label htmlFor={guardrail.id} className="text-sm font-medium">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                            <guardrail.icon className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <Label htmlFor={guardrail.id} className="text-sm font-semibold cursor-pointer">
                               {guardrail.title}
                             </Label>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground leading-relaxed">
                               {guardrail.description}
                             </p>
                           </div>
@@ -215,6 +224,7 @@ const Integrations = () => {
                           id={guardrail.id}
                           checked={integration.github.guardrails[guardrail.id as keyof typeof integration.github.guardrails]}
                           onCheckedChange={() => handleToggleGuardrail(guardrail.id)}
+                          className="mt-1"
                         />
                       </div>
                     ))}
@@ -226,32 +236,32 @@ const Integrations = () => {
         </Card>
 
         {/* Coming Soon Integrations */}
-        <Card className="stepable-card opacity-60">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-stepable-xl flex items-center space-x-2">
+        <Card className="apple-card border-2 border-dashed border-muted-foreground/20 bg-muted/10">
+          <CardHeader className="pb-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <CardTitle className="text-stepable-xl flex items-center space-x-3">
                   <span>Más integraciones</span>
-                  <Badge variant="outline">Próximamente</Badge>
+                  <Badge variant="outline" className="bg-background">Próximamente</Badge>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-stepable-base">
                   Jira, Trello, Slack y más herramientas de tu stack
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 { name: "Jira", color: "bg-blue-600" },
                 { name: "Trello", color: "bg-blue-500" },
                 { name: "Slack", color: "bg-purple-600" },
                 { name: "Linear", color: "bg-gray-800" }
               ].map((tool) => (
-                <div key={tool.name} className="text-center p-4 border border-dashed border-border rounded-lg">
-                  <div className={`w-8 h-8 ${tool.color} rounded mx-auto mb-2`}></div>
-                  <div className="text-sm font-medium">{tool.name}</div>
+                <div key={tool.name} className="text-center p-6 border border-dashed border-border rounded-xl hover:bg-muted/20 transition-colors group">
+                  <div className={`w-10 h-10 ${tool.color} rounded-xl mx-auto mb-3 shadow-soft group-hover:shadow-medium transition-shadow`}></div>
+                  <div className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{tool.name}</div>
                 </div>
               ))}
             </div>

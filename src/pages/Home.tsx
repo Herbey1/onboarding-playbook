@@ -147,10 +147,8 @@ const Home = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
-        {/* Welcome Section with Stats */}
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Welcome Section with Stats */}
         <motion.div 
           className="mb-12"
           initial={{ opacity: 0, y: 20 }}
@@ -378,7 +376,7 @@ const Home = () => {
             />
           </motion.div>
         )}
-      </main>
+      </div>
     </div>
   );
 };
