@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import NotFound from "./pages/NotFound";
+import ProjectManagement from "./pages/ProjectManagement";
+import ProjectSettings from "./components/ProjectSettings";
+import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
@@ -14,7 +17,6 @@ import Library from "./pages/Library";
 import OnboardingPlan from "./pages/OnboardingPlan";
 import OnboardingPlayer from "./pages/OnboardingPlayer";
 import Integrations from "./pages/Integrations";
-import ProjectSettings from "./pages/ProjectSettings";
 
 const queryClient = new QueryClient();
 
@@ -59,8 +61,9 @@ const App = () => (
             <Route path="onboarding/plan" element={<OnboardingPlan />} />
             <Route path="onboarding/player" element={<OnboardingPlayer />} />
             <Route path="integrations" element={<Integrations />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<ProjectSettings />} />
-            <Route path="analytics" element={<div className="p-8"><h1 className="text-2xl font-bold">Analytics - Coming Soon</h1></div>} />
+            <Route path="manage" element={<ProjectManagement />} />
             <Route index element={<Library />} />
           </Route>
           <Route path="*" element={<NotFound />} />

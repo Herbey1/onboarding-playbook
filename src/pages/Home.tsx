@@ -1,150 +1,103 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Plus, BookOpen, Code, TrendingUp, Target, Clock, Zap, ArrowRight, Star, CheckCircle, Users } from "lucide-react";
+import { Target, CheckCircle, Users, Star, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { User as SupabaseUser } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/useAuth";
+import { useProjects } from "@/hooks/useProjects";
 import { EmptyState } from "@/components/EmptyStates";
+import ProjectCard from "@/components/ProjectCard";
+import CreateProjectDialog from "@/components/CreateProjectDialog";
+import JoinProjectDialog from "@/components/JoinProjectDialog";
+import { useProjectActions } from "@/hooks/useProjectActions";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Mock data for projects - enhanced with more engaging data
-const mockProjects = [
-  {
-    id: "1",
-    name: "Sistema de Pagos",
-    description: "API REST para procesamiento de pagos con Stripe y webhooks",
-    stack: ["React", "Node.js", "PostgreSQL", "Docker", "Stripe"],
-    progress: 75,
-    status: "published",
-    members: 8,
-    lastActivity: "2024-01-15",
-    completedModules: 6,
-    totalModules: 8,
-    averageRating: 4.8,
-    daysActive: 15,
-    recentActivity: "2 horas"
-  },
-  {
-    id: "2", 
-    name: "Dashboard Analytics",
-    description: "Panel de control con métricas en tiempo real y visualizaciones",
-    stack: ["Vue.js", "Python", "Redis", "Kubernetes", "D3.js"],
-    progress: 45,
-    status: "draft",
-    members: 5,
-    lastActivity: "2024-01-12",
-    completedModules: 3,
-    totalModules: 7,
-    averageRating: 4.2,
-    daysActive: 8,
-    recentActivity: "1 día"
-  },
-  {
-    id: "3",
-    name: "Mobile App",
-    description: "Aplicación móvil para gestión de inventario en tiempo real",
-    stack: ["React Native", "Firebase", "TypeScript", "Redux"],
-    progress: 90,
-    status: "published", 
-    members: 12,
-    lastActivity: "2024-01-14",
-    completedModules: 9,
-    totalModules: 10,
-    averageRating: 4.9,
-    daysActive: 25,
-    recentActivity: "30 min"
-  }
-];
-
-// Enhanced stack colors with more variety
-const stackColors: Record<string, string> = {
-  "React": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
-  "Node.js": "bg-green-100 text-green-800 border-green-200 hover:bg-green-200",
-  "PostgreSQL": "bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200",
-  "Docker": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
-  "Vue.js": "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200",
-  "Python": "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200",
-  "Redis": "bg-red-100 text-red-800 border-red-200 hover:bg-red-200",
-  "Kubernetes": "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200",
-  "React Native": "bg-cyan-100 text-cyan-800 border-cyan-200 hover:bg-cyan-200",
-  "Firebase": "bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200",
-  "TypeScript": "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
-  "Stripe": "bg-violet-100 text-violet-800 border-violet-200 hover:bg-violet-200",
-  "D3.js": "bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-200",
-  "Redux": "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
-};
+// Project members cache for performance
+const projectMembersCache = new Map();
 
 const Home = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [projects] = useState(mockProjects);
+  const { user, loading: authLoading } = useAuth();
+  const { projects, loading: projectsLoading, createProject } = useProjects();
+  const { handleDeleteProject, handleLeaveProject, handleJoinProject, loading: actionLoading } = useProjectActions();
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+  const [leaveProjectId, setLeaveProjectId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Redirect to auth if not authenticated
   useEffect(() => {
-    // Check auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-      setUser(session.user);
-    });
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || !session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const handleCreateProject = () => {
-    toast({
-      title: "Próximamente",
-      description: "La creación de proyectos estará disponible pronto",
-    });
+  const handleCreateProject = async (name: string, description?: string) => {
+    if (!user) return;
+    await createProject(name, description);
   };
 
-  // Enhanced stats for dashboard
+  const onDeleteProject = async (projectId: string) => {
+    const success = await handleDeleteProject(projectId);
+    if (success) {
+      setDeleteProjectId(null);
+    }
+  };
+
+  const onLeaveProject = async (projectId: string) => {
+    const success = await handleLeaveProject(projectId);
+    if (success) {
+      setLeaveProjectId(null);
+    }
+  };
+
+  const onJoinProject = async (inviteCode: string) => {
+    await handleJoinProject(inviteCode);
+  };
+
+  // Calculate real dashboard stats
   const dashboardStats = [
     { 
-      label: "Proyectos Activos", 
-      value: projects.filter(p => p.status === "published").length.toString(),
+      label: "Proyectos Totales", 
+      value: projects?.length.toString() || "0",
       icon: Target, 
       color: "text-primary",
-      trend: "+2 este mes"
+      trend: "Proyectos creados"
     },
     { 
-      label: "Módulos Completados", 
-      value: projects.reduce((sum, p) => sum + p.completedModules, 0).toString(),
+      label: "Proyectos como Propietario", 
+      value: projects?.filter(p => p.owner_id === user?.id).length.toString() || "0",
       icon: CheckCircle, 
       color: "text-success",
-      trend: "+8 esta semana"
+      trend: "Proyectos propios"
     },
     { 
-      label: "Miembros Activos", 
-      value: projects.reduce((sum, p) => sum + p.members, 0).toString(),
+      label: "Colaboraciones", 
+      value: projects?.filter(p => p.owner_id !== user?.id).length.toString() || "0",
       icon: Users, 
       color: "text-accent",
-      trend: "+5 nuevos"
+      trend: "Proyectos colaborando"
     },
     { 
-      label: "Promedio Calificación", 
-      value: (projects.reduce((sum, p) => sum + p.averageRating, 0) / projects.length).toFixed(1),
+      label: "Actividad", 
+      value: projects?.length > 0 ? "Activo" : "Inicial",
       icon: Star, 
       color: "text-warning",
-      trend: "Excelente"
+      trend: "Estado general"
     }
   ];
 
-  if (!user) return null;
+  if (authLoading || !user) return null;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -224,160 +177,161 @@ const Home = () => {
         
         <div className="flex gap-3">
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button variant="outline" className="hover-glow">
-              <Code className="mr-2 h-4 w-4" />
-              Unirse por código
-            </Button>
+            <JoinProjectDialog onJoinProject={onJoinProject} loading={actionLoading} />
           </motion.div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button variant="blue" onClick={handleCreateProject}>
-              <Plus className="mr-2 h-4 w-4" />
-              Crear proyecto
-            </Button>
+            <CreateProjectDialog onCreateProject={handleCreateProject} loading={projectsLoading} />
           </motion.div>
         </div>
       </motion.div>
 
       {/* Projects Grid or Empty State */}
-      {projects.length > 0 ? (
+      {projectsLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="h-64 animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 w-3/4 bg-muted rounded mb-2"></div>
+                <div className="h-3 w-full bg-muted rounded mb-4"></div>
+                <div className="h-3 w-1/2 bg-muted rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : projects && projects.length > 0 ? (
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
         >
           {projects.map((project, index) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ 
-                delay: 0.7 + index * 0.1,
-                duration: 0.4,
-                ease: "easeOut"
-              }}
-              whileHover={{ 
-                y: -8,
-                transition: { duration: 0.2, ease: "easeOut" }
-              }}
-              className="group"
-            >
-              <Card
-                className="stepable-card hover:shadow-strong cursor-pointer group h-full bg-card/80 backdrop-blur-sm border-0 transition-all duration-300"
-                onClick={() => navigate(`/project/${project.id}`)}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-stepable-xl group-hover:text-primary transition-colors duration-200">
-                        {project.name}
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        {project.description}
-                      </CardDescription>
-                    </div>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className="ml-2"
-                    >
-                      <Badge 
-                        variant={project.status === "published" ? "default" : "secondary"}
-                        className="hover-scale transition-transform duration-200"
-                      >
-                        {project.status === "published" ? "Publicado" : "Borrador"}
-                      </Badge>
-                    </motion.div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Stack */}
-                    <div>
-                      <p className="text-sm font-medium mb-2">Stack tecnológico</p>
-                      <motion.div 
-                        className="flex flex-wrap gap-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1 + index * 0.1 }}
-                      >
-                        {project.stack.map((tech, techIndex) => (
-                          <motion.div
-                            key={tech}
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ 
-                              delay: 1.1 + index * 0.1 + techIndex * 0.05,
-                              type: "spring",
-                              stiffness: 300,
-                              damping: 20
-                            }}
-                          >
-                            <Badge 
-                              variant="outline" 
-                              className="text-xs hover-scale transition-transform duration-200"
-                            >
-                              {tech}
-                            </Badge>
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                    </div>
-
-                    {/* Progress */}
-                    {project.status === "published" && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1.2 + index * 0.1 }}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium">Progreso del onboarding</p>
-                          <span className="text-sm text-muted-foreground font-medium text-primary">
-                            {project.progress}%
-                          </span>
-                        </div>
-                        <Progress value={project.progress} className="stepable-progress h-3" />
-                      </motion.div>
-                    )}
-
-                    {/* Metadata */}
-                    <motion.div 
-                      className="flex items-center justify-between text-sm text-muted-foreground"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.3 + index * 0.1 }}
-                    >
-                      <div className="flex items-center space-x-1 hover:text-foreground transition-colors">
-                        <Users className="h-4 w-4" />
-                        <span>{project.members} miembros</span>
-                      </div>
-                      <div className="flex items-center space-x-1 hover:text-foreground transition-colors">
-                        <Clock className="h-4 w-4" />
-                        <span>{project.recentActivity}</span>
-                      </div>
-                    </motion.div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <ProjectWithMembers 
+              key={project.id} 
+              project={project} 
+              index={index}
+              currentUserId={user?.id}
+              onDelete={() => setDeleteProjectId(project.id)}
+              onLeave={() => setLeaveProjectId(project.id)}
+            />
           ))}
         </motion.div>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
         >
           <EmptyState
             variant="projects"
             title="¡Crea tu primer proyecto!"
-            description="Comienza subiendo las guías de tu equipo y genera un plan de onboarding personalizado para nuevos desarrolladores."
+            description="Comienza creando un proyecto y genera un plan de onboarding personalizado para nuevos desarrolladores."
             actionLabel="Crear proyecto"
-            onAction={handleCreateProject}
+            onAction={() => {}}
           />
         </motion.div>
       )}
+
+      {/* Delete Project Dialog */}
+      <AlertDialog open={!!deleteProjectId} onOpenChange={() => setDeleteProjectId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto 
+              y todos sus datos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteProjectId && onDeleteProject(deleteProjectId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={actionLoading}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {actionLoading ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Leave Project Dialog */}
+      <AlertDialog open={!!leaveProjectId} onOpenChange={() => setLeaveProjectId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Abandonar proyecto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dejarás de tener acceso a este proyecto. Un administrador podrá invitarte nuevamente si es necesario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => leaveProjectId && onLeaveProject(leaveProjectId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={actionLoading}
+            >
+              {actionLoading ? 'Saliendo...' : 'Abandonar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  );
+};
+
+// Component to fetch and display project with members
+const ProjectWithMembers = ({ 
+  project, 
+  index, 
+  currentUserId, 
+  onDelete, 
+  onLeave 
+}: { 
+  project: any; 
+  index: number; 
+  currentUserId?: string;
+  onDelete: () => void;
+  onLeave: () => void;
+}) => {
+  // Create a minimal hook instance just for this project's members
+  const [members, setMembers] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const { data } = await supabase
+          .from('project_members')
+          .select(`
+            id,
+            project_id,
+            user_id,
+            role,
+            joined_at,
+            profiles(email, full_name, avatar_url)
+          `)
+          .eq('project_id', project.id);
+        
+        setMembers(data || []);
+      } catch (error) {
+        console.error('Error fetching members:', error);
+        setMembers([]);
+      }
+    };
+
+    fetchMembers();
+  }, [project.id]);
+  
+  return (
+    <ProjectCard
+      project={project}
+      members={members}
+      index={index}
+      currentUserId={currentUserId}
+      onDelete={onDelete}
+      onLeave={onLeave}
+    />
   );
 };
 
