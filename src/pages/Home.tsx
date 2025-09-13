@@ -230,7 +230,7 @@ const Home = () => {
             </Button>
           </motion.div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button variant="blue" onClick={handleCreateProject} className="shadow-glow animate-glow-pulse">
+            <Button variant="blue" onClick={handleCreateProject}>
               <Plus className="mr-2 h-4 w-4" />
               Crear proyecto
             </Button>

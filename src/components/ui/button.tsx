@@ -15,7 +15,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-soft hover:shadow-medium hover:-translate-y-0.5",
         ghost: "hover:bg-accent hover:text-accent-foreground hover:-translate-y-0.5",
         link: "text-primary underline-offset-4 hover:underline",
-        blue: "bg-gradient-to-r from-primary to-secondary text-white shadow-medium hover:shadow-strong hover:-translate-y-1 hover:scale-105 border-0 font-semibold",
+        blue: "bg-primary text-primary-foreground shadow-medium hover:shadow-strong hover:-translate-y-1 hover:scale-105 border-0 font-semibold",
         apple: "bg-white/10 text-white border border-white/20 hover:bg-white/20 backdrop-blur-md shadow-medium hover:shadow-strong hover:-translate-y-0.5",
       },
       size: {

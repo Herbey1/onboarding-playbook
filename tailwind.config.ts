@@ -170,7 +170,6 @@ export default {
         "pulse-glow": "pulse-glow 2s infinite",
         "bounce-subtle": "bounce-subtle 2s infinite",
         "wiggle": "wiggle 0.5s ease-in-out",
-        "glow": "glow 2s ease-in-out infinite",
         "card-hover": "card-hover 0.3s ease-out forwards",
         "progress-fill": "progress-fill 1s ease-out forwards",
         "typing": "typing 3s steps(40, end) infinite",

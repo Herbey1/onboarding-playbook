@@ -233,7 +233,7 @@ const OnboardingPlan = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            <h1 className="text-stepable-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+            <h1 className="text-stepable-4xl font-bold text-primary mb-2">
               Plan de Onboarding
             </h1>
             <p className="text-muted-foreground text-stepable-xl">
@@ -253,7 +253,7 @@ const OnboardingPlan = () => {
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button variant="blue" onClick={handleCreateModule} className="shadow-glow">
+              <Button variant="blue" onClick={handleCreateModule}>
                 <Plus className="mr-2 h-4 w-4" />
                 Nuevo módulo
               </Button>

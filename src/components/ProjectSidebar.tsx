@@ -86,6 +86,7 @@ const ProjectSidebar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    navigate("/auth");
     toast({
       title: "Sesión cerrada",
       description: "Hasta la próxima",

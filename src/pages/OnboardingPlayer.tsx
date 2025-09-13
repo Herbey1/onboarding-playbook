@@ -321,7 +321,7 @@ const OnboardingPlayer = () => {
                       onChange={(e) => setPrContent(e.target.value)}
                       className="min-h-[300px] font-mono text-sm"
                     />
-                    <Button onClick={validatePR} className="w-full hover-scale bg-gradient-to-r from-primary to-secondary text-white">
+                    <Button onClick={validatePR} className="w-full hover-scale bg-primary text-primary-foreground">
                       <CheckCircle className="mr-2 h-4 w-4" />
                       Validar mi PR
                     </Button>
@@ -434,7 +434,7 @@ const OnboardingPlayer = () => {
               ))}
               
               {!showResults && (
-                <Button onClick={submitQuiz} className="w-full stepable-button bg-gradient-to-r from-primary to-accent text-white hover-scale">
+                <Button onClick={submitQuiz} className="w-full stepable-button bg-primary text-primary-foreground hover-scale">
                   <HelpCircle className="mr-2 h-4 w-4" />
                   Enviar respuestas del quiz
                 </Button>
@@ -472,7 +472,7 @@ const OnboardingPlayer = () => {
                 Marcar como completa
               </Button>
             )}
-            <Button onClick={handleNext} className="bg-gradient-to-r from-primary to-secondary text-white hover-scale">
+            <Button onClick={handleNext} className="bg-primary text-primary-foreground hover-scale">
               Siguiente lección
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>

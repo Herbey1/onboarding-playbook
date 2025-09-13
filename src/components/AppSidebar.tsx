@@ -37,20 +37,17 @@ const mainMenuItems = [
   { 
     title: "Dashboard", 
     url: "/", 
-    icon: Home,
-    description: "Resumen y estadísticas generales"
+    icon: Home
   },
   { 
     title: "Biblioteca", 
     url: "/library", 
-    icon: Library,
-    description: "Documentos y recursos"
+    icon: Library
   },
   { 
     title: "Integraciones", 
     url: "/integrations", 
-    icon: Puzzle,
-    description: "Conecta herramientas externas"
+    icon: Puzzle
   }
 ];
 
@@ -58,20 +55,17 @@ const projectMenuItems = [
   { 
     title: "Plan de Formación", 
     url: "/project/1/onboarding", 
-    icon: Target,
-    description: "Módulos de onboarding"
+    icon: Target
   },
   { 
     title: "Análisis", 
     url: "/project/1/analytics", 
-    icon: BarChart3,
-    description: "Métricas y progreso"
+    icon: BarChart3
   },
   { 
     title: "Configuración", 
     url: "/project/1/settings", 
-    icon: Settings,
-    description: "Ajustes del proyecto"
+    icon: Settings
   }
 ];
 
@@ -79,8 +73,7 @@ const userMenuItems = [
   { 
     title: "Mi Perfil", 
     url: "/profile", 
-    icon: User,
-    description: "Información personal"
+    icon: User
   }
 ];
 
@@ -89,7 +82,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
   
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
@@ -100,7 +93,7 @@ export function AppSidebar() {
   };
   
   const getNavCls = (isActiveState: boolean) =>
-    `transition-all duration-300 rounded-xl ${
+    `transition-all duration-300 rounded-xl min-w-0 ${
       isActiveState 
         ? "bg-primary text-primary-foreground shadow-soft" 
         : "hover:bg-muted/80 hover:shadow-soft text-muted-foreground hover:text-foreground"
@@ -183,8 +176,6 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton 
                         asChild
-                        onMouseEnter={() => setHoveredItem(item.url)}
-                        onMouseLeave={() => setHoveredItem(null)}
                       >
                         <NavLink 
                           to={item.url} 
@@ -192,9 +183,9 @@ export function AppSidebar() {
                           className={getNavCls(isActiveState)}
                         >
                           <motion.div
-                            whileHover={{ scale: 1.08, x: 8 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="flex items-center gap-3 p-4"
+                            whileHover={{ scale: 1.02, x: 4 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="flex items-center gap-3 p-3 w-full min-w-0"
                           >
                             <Icon className={`h-5 w-5 ${isActiveState ? 'text-white' : ''}`} />
                             <AnimatePresence mode="wait">
@@ -204,19 +195,9 @@ export function AppSidebar() {
                                   animate={{ opacity: 1, width: "auto" }}
                                   exit={{ opacity: 0, width: 0 }}
                                   transition={{ duration: 0.3 }}
-                                  className="flex-1 overflow-hidden min-w-0"
+                                  className="flex-1 min-w-0 pr-2"
                                 >
-                                  <div className="font-medium truncate">{item.title}</div>
-                                  {hoveredItem === item.url && (
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: "auto" }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      className="text-xs opacity-80 mt-1 truncate"
-                                    >
-                                      {item.description}
-                                    </motion.div>
-                                  )}
+                                  <div className="font-medium">{item.title}</div>
                                 </motion.div>
                               )}
                             </AnimatePresence>
@@ -272,8 +253,6 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton 
                         asChild
-                        onMouseEnter={() => setHoveredItem(item.url)}
-                        onMouseLeave={() => setHoveredItem(null)}
                       >
                         <NavLink 
                           to={item.url} 
@@ -294,16 +273,6 @@ export function AppSidebar() {
                                   className="flex-1"
                                 >
                                   <div className="font-medium">{item.title}</div>
-                                  {hoveredItem === item.url && (
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: "auto" }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      className="text-xs text-opacity-80 mt-1"
-                                    >
-                                      {item.description}
-                                    </motion.div>
-                                  )}
                                 </motion.div>
                               )}
                             </AnimatePresence>
