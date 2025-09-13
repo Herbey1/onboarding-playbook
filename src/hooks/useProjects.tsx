@@ -53,12 +53,45 @@ export function useProjects() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*');
+      // Scope projects to the authenticated user (member or owner)
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
 
-      if (error) throw error;
-      setProjects(data || []);
+      const user = authData?.user;
+      if (!user) {
+        setProjects([]);
+        return;
+      }
+
+      // Fetch projects where the user is a member
+      const memberPromise = supabase
+        .from('project_members')
+        .select('projects(*)')
+        .eq('user_id', user.id);
+
+      // And projects owned by the user (in case some legacy projects lack membership rows)
+      const ownerPromise = supabase
+        .from('projects')
+        .select('*')
+        .eq('owner_id', user.id);
+
+      const [memberRes, ownerRes] = await Promise.all([memberPromise, ownerPromise]);
+
+      if (memberRes.error) throw memberRes.error;
+      if (ownerRes.error) throw ownerRes.error;
+
+      const memberProjects = (memberRes.data || [])
+        .map((row: any) => (row as any).projects)
+        .filter(Boolean);
+      const ownedProjects = ownerRes.data || [];
+
+      // Merge unique by id
+      const uniqueMap = new Map<string, Project>();
+      [...memberProjects, ...ownedProjects].forEach((p: any) => {
+        if (p && p.id) uniqueMap.set(p.id, p);
+      });
+
+      setProjects(Array.from(uniqueMap.values()));
     } catch (error: any) {
       console.error('Error fetching projects:', error);
     } finally {
@@ -105,6 +138,20 @@ export function useProjects() {
       }
 
       console.log('✅ [DEBUG] Proyecto creado en Supabase:', project);
+
+      // Asegurar membresía del propietario como 'owner'
+      try {
+        await supabase
+          .from('project_members')
+          .insert({
+            project_id: project.id,
+            user_id: user.id,
+            role: 'owner'
+          });
+        console.log('✅ [DEBUG] Membresía del propietario creada');
+      } catch (memErr) {
+        console.warn('⚠️ [DEBUG] No se pudo crear la membresía del propietario:', memErr);
+      }
 
       // Guardar documentación si se proporciona
       if (documentation) {
@@ -209,6 +256,33 @@ export function useProjects() {
       });
       
       console.log('🎉 [DEBUG] Proceso de creación completado exitosamente');
+
+      // Generar actividades del proyecto con IA (no bloqueante)
+      try {
+        console.log('🤖 [DEBUG] Generando actividades del proyecto con IA...');
+        const docs = documentation || {
+          pr_template: '',
+          code_nomenclature: '',
+          gitflow_docs: '',
+          additional_docs: ''
+        };
+        const activities = await geminiService.generateActivities(name, description, docs);
+        const mergedSettings = {
+          ...(project.settings || {}),
+          activities: activities.activities,
+          activities_generated_at: new Date().toISOString()
+        };
+        const upd = await supabase
+          .from('projects')
+          .update({ settings: mergedSettings, updated_at: new Date().toISOString() })
+          .eq('id', project.id);
+        if (upd.error) throw upd.error;
+        console.log('✅ [DEBUG] Actividades generadas y guardadas');
+        // Refrescar proyectos en background
+        fetchProjects();
+      } catch (actErr) {
+        console.warn('⚠️ [DEBUG] No se pudieron generar actividades:', actErr);
+      }
       
     } catch (error) {
       console.error('❌ [DEBUG] Error general en createProject:', error);
@@ -217,6 +291,60 @@ export function useProjects() {
         stack: error instanceof Error ? error.stack : undefined,
         error
       });
+    }
+  };
+
+  const generateActivities = async (projectId: string) => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth?.user;
+      if (!user) throw new Error('No authenticated');
+
+      // Cargar proyecto y documentación
+      const { data: project, error: projErr } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+      if (projErr || !project) throw projErr || new Error('Proyecto no encontrado');
+
+      const { data: docsRow } = await supabase
+        .from('project_documentation')
+        .select('*')
+        .eq('project_id', projectId)
+        .single();
+
+      const docs = {
+        pr_template: docsRow?.pr_template || '',
+        code_nomenclature: docsRow?.code_nomenclature || '',
+        gitflow_docs: docsRow?.gitflow_docs || '',
+        additional_docs: docsRow?.additional_docs || ''
+      };
+
+      const gen = await geminiService.generateActivities(project.name, project.description || '', docs);
+      const mergedSettings = {
+        ...(project.settings || {}),
+        activities: gen.activities,
+        activities_generated_at: new Date().toISOString()
+      };
+
+      const { error: updErr } = await supabase
+        .from('projects')
+        .update({ settings: mergedSettings, updated_at: new Date().toISOString() })
+        .eq('id', projectId);
+      if (updErr) throw updErr;
+
+      toast({
+        title: 'Actividades generadas',
+        description: 'Se creó un backlog inicial con IA'
+      });
+
+      await fetchProjects();
+      return gen.activities;
+    } catch (error) {
+      console.error('Error generating activities:', error);
+      toast({ title: 'No fue posible generar actividades', description: 'Intenta nuevamente más tarde' });
+      return [];
     }
   };
 
@@ -258,12 +386,94 @@ export function useProjects() {
         return;
       }
 
-      // Eliminar proyecto real de Supabase
+      // Verificar propietario actual antes de eliminar
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const user = authData?.user;
+        if (!user) throw new Error('No authenticated');
+        if (project && project.owner_id && project.owner_id !== user.id) {
+          throw new Error('Unauthorized: solo el propietario puede eliminar el proyecto');
+        }
+      } catch (permErr) {
+        console.warn('⚠️ Permisos insuficientes para eliminar el proyecto:', permErr);
+        throw permErr;
+      }
+
+      // Eliminar datos relacionados (orden seguro por claves foráneas)
+      // 1) Contenidos del curso (quizzes/summaries -> topics)
+      try {
+        const { data: topics } = await supabase
+          .from('course_topics')
+          .select('id')
+          .eq('project_id', projectId);
+        const topicIds = (topics || []).map((t: any) => t.id);
+        if (topicIds.length > 0) {
+          const delQuizzes = await supabase
+            .from('course_quizzes')
+            .delete()
+            .in('topic_id', topicIds);
+          if (delQuizzes.error) throw delQuizzes.error;
+
+          const delSummaries = await supabase
+            .from('course_summaries')
+            .delete()
+            .in('topic_id', topicIds);
+          if (delSummaries.error) throw delSummaries.error;
+        }
+
+        const delTopics = await supabase
+          .from('course_topics')
+          .delete()
+          .eq('project_id', projectId);
+        if (delTopics.error) throw delTopics.error;
+      } catch (contentErr) {
+        console.warn('⚠️ Error eliminando contenidos del curso:', contentErr);
+      }
+
+      // 2) Documentación del proyecto
+      try {
+        const delDocs = await supabase
+          .from('project_documentation')
+          .delete()
+          .eq('project_id', projectId);
+        if (delDocs.error) throw delDocs.error;
+      } catch (docErr) {
+        console.warn('⚠️ Error eliminando documentación del proyecto:', docErr);
+      }
+
+      // 3) Invitaciones y códigos de invitación
+      try {
+        const delInvites = await supabase
+          .from('project_invitations')
+          .delete()
+          .eq('project_id', projectId);
+        if (delInvites.error) throw delInvites.error;
+
+        const delCodes = await supabase
+          .from('project_invite_codes')
+          .delete()
+          .eq('project_id', projectId);
+        if (delCodes.error) throw delCodes.error;
+      } catch (invErr) {
+        console.warn('⚠️ Error eliminando invitaciones/códigos:', invErr);
+      }
+
+      // 4) Membresías
+      try {
+        const delMembers = await supabase
+          .from('project_members')
+          .delete()
+          .eq('project_id', projectId);
+        if (delMembers.error) throw delMembers.error;
+      } catch (memErr) {
+        console.warn('⚠️ Error eliminando membresías:', memErr);
+      }
+
+      // 5) Proyecto
       const { error } = await supabase
         .from('projects')
         .delete()
         .eq('id', projectId);
-
       if (error) throw error;
 
       toast({
@@ -275,6 +485,28 @@ export function useProjects() {
     } catch (error: any) {
       console.error('Error deleting project:', error);
       throw error;
+    }
+  };
+
+  const leaveProject = async (projectId: string) => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData?.user;
+      if (!user) throw new Error('No authenticated');
+
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('project_id', projectId)
+        .eq('user_id', user.id);
+      if (error) throw error;
+
+      // Refrescar lista de proyectos para reflejar salida
+      await fetchProjects();
+      return true;
+    } catch (error: any) {
+      console.error('Error leaving project:', error);
+      return false;
     }
   };
 
@@ -317,6 +549,8 @@ export function useProjects() {
     createProject,
     updateProject,
     deleteProject,
+    generateActivities,
+    leaveProject,
     joinProjectByCode,
     refetch: fetchProjects
   };

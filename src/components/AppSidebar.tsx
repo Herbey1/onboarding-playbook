@@ -51,23 +51,12 @@ const mainMenuItems = [
   }
 ];
 
-const projectMenuItems = [
-  { 
-    title: "Plan de Formación", 
-    url: "/project/1/onboarding", 
-    icon: Target
-  },
-  { 
-    title: "Análisis", 
-    url: "/project/1/analytics", 
-    icon: BarChart3
-  },
-  { 
-    title: "Configuración", 
-    url: "/project/1/settings", 
-    icon: Settings
-  }
-];
+// Build project menu based on current path's projectId to avoid hardcoding
+const buildProjectMenu = (projectId?: string) => ([
+  { title: "Plan de Formación", url: projectId ? `/project/${projectId}/onboarding` : "/", icon: Target },
+  { title: "Análisis", url: projectId ? `/project/${projectId}/analytics` : "/", icon: BarChart3 },
+  { title: "Gestionar", url: projectId ? `/project/${projectId}/manage` : "/", icon: Settings }
+]);
 
 const userMenuItems = [
   { 
@@ -83,7 +72,11 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  
+  // Try to infer current projectId from the path: /project/:id/...
+  const projectIdMatch = currentPath.match(/^\/project\/([^/]+)/);
+  const currentProjectId = projectIdMatch?.[1];
+  const projectMenuItems = buildProjectMenu(currentProjectId);
+
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
   
@@ -221,7 +214,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Project Navigation */}
+        {/* Project Navigation (only inside project routes to avoid duplication) */}
+        {currentPath.startsWith("/project/") && (
         <SidebarGroup className="mt-6">
           <AnimatePresence>
             {!collapsed && (
@@ -295,6 +289,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         {/* User Section */}
         <div className="mt-auto pt-6">

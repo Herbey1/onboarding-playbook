@@ -58,10 +58,10 @@ const navItems = [
     description: "Conexiones con GitHub, Jira..."
   },
   {
-    title: "Ajustes",
-    href: "settings",
+    title: "Gestionar",
+    href: "manage",
     icon: Settings,
-    description: "Roles, códigos y configuración"
+    description: "Roles, invitaciones y configuración"
   }
 ];
 

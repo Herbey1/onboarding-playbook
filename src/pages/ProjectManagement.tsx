@@ -37,7 +37,9 @@ import {
   Mail,
   Calendar,
   ExternalLink,
-  Save
+  Save,
+  RefreshCw,
+  ListChecks
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,7 +53,7 @@ const ProjectManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { projects, updateProject, deleteProject } = useProjects();
+  const { projects, updateProject, deleteProject, generateActivities } = useProjects();
   const { 
     members, 
     invitations, 
@@ -69,6 +71,7 @@ const ProjectManagement = () => {
     description: ""
   });
   const [saving, setSaving] = useState(false);
+  const [genLoading, setGenLoading] = useState(false);
   
   const { toast } = useToast();
   
@@ -76,6 +79,7 @@ const ProjectManagement = () => {
   const isOwner = project?.owner_id === user?.id;
   const userMember = members?.find(m => m.user_id === user?.id);
   const isAdmin = isOwner || userMember?.role === 'admin';
+  const activities = (project?.settings as any)?.activities as any[] | undefined;
 
   // Initialize settings data when project loads
   useEffect(() => {
@@ -166,6 +170,16 @@ const ProjectManagement = () => {
     }
   };
 
+  const handleGenerateActivities = async () => {
+    if (!projectId) return;
+    setGenLoading(true);
+    try {
+      await generateActivities(projectId);
+    } finally {
+      setGenLoading(false);
+    }
+  };
+
   const handleLeaveProject = async () => {
     try {
       const success = await leaveProject();
@@ -225,9 +239,10 @@ const ProjectManagement = () => {
       </div>
 
       <Tabs defaultValue="members" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="members">Miembros</TabsTrigger>
           <TabsTrigger value="documentation">Documentación</TabsTrigger>
+          <TabsTrigger value="activities">Actividades</TabsTrigger>
           {isAdmin && <TabsTrigger value="settings">Configuración</TabsTrigger>}
         </TabsList>
 
@@ -465,6 +480,87 @@ const ProjectManagement = () => {
             projectId={projectId!} 
             canEdit={isAdmin} 
           />
+        </TabsContent>
+
+        {/* Activities Tab */}
+        <TabsContent value="activities" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ListChecks className="h-5 w-5" />
+                Actividades del proyecto
+              </CardTitle>
+              <CardDescription>
+                Backlog inicial generado por IA según tu documentación
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {(project?.settings as any)?.activities_generated_at ? (
+                    <>Última generación: {new Date((project?.settings as any)?.activities_generated_at).toLocaleString('es-ES')}</>
+                  ) : (
+                    <>Aún no se han generado actividades</>
+                  )}
+                </div>
+                {isAdmin && (
+                  <Button onClick={handleGenerateActivities} disabled={genLoading}>
+                    {genLoading ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        {activities && activities.length ? 'Regenerar' : 'Generar'}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              {!activities || activities.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  No hay actividades generadas todavía.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {activities.map((act: any, idx: number) => (
+                    <div key={idx} className="p-3 rounded-lg border">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-medium">{act.title}</div>
+                          <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                            {act.description}
+                          </div>
+                        </div>
+                        {act.priority && (
+                          <Badge variant="outline" className="capitalize">
+                            {act.priority}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-2">
+                        {act.category && <span className="px-2 py-0.5 bg-muted rounded">{act.category}</span>}
+                        {typeof act.estimated_hours === 'number' && <span className="px-2 py-0.5 bg-muted rounded">~{act.estimated_hours}h</span>}
+                      </div>
+                      {act.acceptance_criteria && Array.isArray(act.acceptance_criteria) && (
+                        <div className="mt-2 text-sm">
+                          <div className="font-medium mb-1">Criterios de aceptación</div>
+                          <ul className="list-disc list-inside text-muted-foreground">
+                            {act.acceptance_criteria.map((c: string, i: number) => (
+                              <li key={i}>{c}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Settings Tab */}

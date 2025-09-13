@@ -58,10 +58,7 @@ const CreateProjectDialog = ({ onCreateProject, loading }: CreateProjectDialogPr
         gitflow_docs: "",
         additional_docs: ""
       });
-      toast({
-        title: "¡Proyecto creado!",
-        description: "Tu nuevo proyecto ha sido creado exitosamente",
-      });
+      // Evitamos duplicar el toast; el hook ya notifica el éxito
     } catch (error) {
       console.error('Error creating project:', error);
     }

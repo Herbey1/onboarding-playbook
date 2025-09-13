@@ -7,7 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import NotFound from "./pages/NotFound";
 import ProjectManagement from "./pages/ProjectManagement";
-import ProjectSettings from "./components/ProjectSettings";
+// Unify settings under ProjectManagement to avoid duplicate pages
 import ProjectDashboard from "./pages/ProjectDashboard";
 import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
@@ -63,7 +63,7 @@ const App = () => (
             <Route path="onboarding/player" element={<OnboardingPlayer />} />
             <Route path="integrations" element={<Integrations />} />
             <Route path="analytics" element={<Analytics />} />
-            <Route path="settings" element={<ProjectSettings />} />
+            <Route path="settings" element={<ProjectManagement />} />
             <Route path="manage" element={<ProjectManagement />} />
             <Route path="dashboard" element={<ProjectDashboard />} />
             <Route index element={<ProjectDashboard />} />

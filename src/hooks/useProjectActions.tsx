@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useProjects, useProjectMembers } from "@/hooks/useProjects";
+import { useProjects } from "@/hooks/useProjects";
 
 export function useProjectActions() {
-  const { deleteProject, joinProjectByCode } = useProjects();
+  const { deleteProject, joinProjectByCode, leaveProject } = useProjects();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -26,8 +26,7 @@ export function useProjectActions() {
   const handleLeaveProject = async (projectId: string) => {
     setLoading(true);
     try {
-      const { leaveProject } = useProjectMembers(projectId);
-      const success = await leaveProject();
+      const success = await leaveProject(projectId);
       if (success) {
         toast({
           title: "Has salido del proyecto",

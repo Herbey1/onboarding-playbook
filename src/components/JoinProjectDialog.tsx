@@ -35,10 +35,7 @@ const JoinProjectDialog = ({ onJoinProject, loading }: JoinProjectDialogProps) =
       await onJoinProject(inviteCode.trim());
       setOpen(false);
       setInviteCode("");
-      toast({
-        title: "¡Te has unido al proyecto!",
-        description: "Ahora puedes acceder al proyecto y colaborar con el equipo",
-      });
+      // Evitamos duplicar el toast; el hook ya notifica el éxito
     } catch (error) {
       console.error('Error joining project:', error);
     }

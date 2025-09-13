@@ -71,7 +71,7 @@ const ProjectCard = ({ project, members, index, onDelete, onLeave, currentUserId
         if (onLeave) onLeave(project.id);
         break;
       case 'settings':
-        navigate(`/project/${project.id}/settings`);
+        navigate(`/project/${project.id}/manage`);
         break;
     }
   };
@@ -121,7 +121,7 @@ const ProjectCard = ({ project, members, index, onDelete, onLeave, currentUserId
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => handleMenuAction('settings')}>
-                    Configuración
+                    Gestionar proyecto
                   </DropdownMenuItem>
                   {!isOwner && (
                     <DropdownMenuItem 

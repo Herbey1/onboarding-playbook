@@ -34,6 +34,20 @@ export interface GeneratedCourse {
   modules: CourseModule[];
 }
 
+export interface ActivityItem {
+  title: string;
+  description: string;
+  category?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  estimated_hours?: number;
+  dependencies?: string[];
+  acceptance_criteria?: string[];
+}
+
+export interface GeneratedActivities {
+  activities: ActivityItem[];
+}
+
 class GeminiService {
   private apiKey: string;
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
@@ -99,6 +113,52 @@ Genera un curso de onboarding con 4-6 módulos. Cada módulo debe incluir:
 - Asegúrate de que el contenido sea relevante al proyecto y documentación proporcionada
 - Los módulos deben seguir una progresión lógica de aprendizaje
 - Incluye ejemplos prácticos cuando sea posible`;
+  }
+
+  private createActivitiesPrompt(projectTitle: string, projectDescription: string, documentation: {
+    pr_template: string;
+    code_nomenclature: string;
+    gitflow_docs: string;
+    additional_docs: string;
+  }): string {
+    return `Eres un gestor de proyectos técnico experto. Genera un backlog inicial de actividades accionables para un proyecto de software.
+
+Proyecto: ${projectTitle}
+Descripción: ${projectDescription}
+
+Documentación relevante:
+${documentation.pr_template ? `PR template:\n${documentation.pr_template}\n` : ''}
+${documentation.code_nomenclature ? `Nomenclatura:\n${documentation.code_nomenclature}\n` : ''}
+${documentation.gitflow_docs ? `Gitflow:\n${documentation.gitflow_docs}\n` : ''}
+${documentation.additional_docs ? `Adicional:\n${documentation.additional_docs}\n` : ''}
+
+Instrucciones:
+- Genera de 8 a 15 actividades atómicas, claras y accionables.
+- Incluye distintas categorías (Planificación, Arquitectura, Desarrollo, QA, DevOps, Documentación).
+- Establece prioridad (low/medium/high/critical) y, si aplica, dependencias por título.
+- Incluye criterios de aceptación concretos.
+
+Formato de respuesta (JSON estricto):
+\`\`\`json
+{
+  "activities": [
+    {
+      "title": "Definir alcance y objetivos",
+      "description": "Redactar un documento de alcance con objetivos SMART...",
+      "category": "Planificación",
+      "priority": "high",
+      "estimated_hours": 6,
+      "dependencies": [],
+      "acceptance_criteria": [
+        "Documento revisado y aprobado por stakeholders",
+        "Objetivos medibles definidos"
+      ]
+    }
+  ]
+}
+\`\`\`
+
+IMPORTANTE: Responde SOLO con JSON válido.`;
   }
 
   async generateCourse(
@@ -187,6 +247,64 @@ Genera un curso de onboarding con 4-6 módulos. Cada módulo debe incluir:
     } catch (error) {
       console.error('Error calling Gemini API:', error);
       throw error;
+    }
+  }
+
+  async generateActivities(
+    projectTitle: string,
+    projectDescription: string,
+    documentation: {
+      pr_template: string;
+      code_nomenclature: string;
+      gitflow_docs: string;
+      additional_docs: string;
+    }
+  ): Promise<GeneratedActivities> {
+    if (!this.apiKey) {
+      throw new Error('API key de Gemini no configurada');
+    }
+
+    const prompt = this.createActivitiesPrompt(projectTitle, projectDescription, documentation);
+    const requestBody: GeminiRequest = {
+      contents: [
+        { parts: [{ text: prompt }] }
+      ]
+    };
+
+    const response = await fetch(this.baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-goog-api-key': this.apiKey
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error de API de Gemini: ${response.status} - ${errorText}`);
+    }
+
+    const data: GeminiResponse = await response.json();
+    if (!data.candidates || data.candidates.length === 0) {
+      throw new Error('No se recibió respuesta válida de Gemini');
+    }
+
+    const generatedText = data.candidates[0].content.parts[0].text;
+    const jsonMatch = generatedText.match(/```json\s*([\s\S]*?)\s*```/);
+    let jsonContent = jsonMatch ? jsonMatch[1] : generatedText;
+    jsonContent = jsonContent.trim();
+
+    try {
+      const parsed: GeneratedActivities = JSON.parse(jsonContent);
+      if (!parsed.activities || !Array.isArray(parsed.activities)) {
+        throw new Error('Estructura de actividades inválida');
+      }
+      return parsed;
+    } catch (e) {
+      console.error('Error parsing JSON from Gemini (activities):', e);
+      console.error('Raw response:', generatedText);
+      throw new Error('Error al procesar actividades de Gemini: formato JSON inválido');
     }
   }
 }
