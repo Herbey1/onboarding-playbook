@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import NotFound from "./pages/NotFound";
 import Analytics from "./pages/Analytics";
+import ProjectManagement from "./pages/ProjectManagement";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="integrations" element={<Integrations />} />
             <Route path="settings" element={<ProjectSettings />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="manage" element={<ProjectManagement />} />
             <Route index element={<Library />} />
           </Route>
           <Route path="*" element={<NotFound />} />

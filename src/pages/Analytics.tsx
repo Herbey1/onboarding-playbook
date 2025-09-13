@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   BarChart3, 
@@ -22,8 +22,6 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from '@/components/ui/chart';
 import {
   AreaChart,
@@ -40,61 +38,84 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from 'recharts';
-import { format, subDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-// Mock data for analytics
-const generateMockData = () => {
-  const last30Days = Array.from({ length: 30 }, (_, i) => {
-    const date = subDays(new Date(), 29 - i);
-    return {
-      date: format(date, 'MMM dd', { locale: es }),
-      fullDate: date,
-      users: Math.floor(Math.random() * 100) + 50,
-      sessions: Math.floor(Math.random() * 150) + 100,
-      completions: Math.floor(Math.random() * 30) + 10,
-      engagement: Math.floor(Math.random() * 40) + 60,
-    };
-  });
-
-  const moduleData = [
-    { name: 'Introducción a React', completed: 85, total: 100, color: 'hsl(var(--primary))' },
-    { name: 'Estado y Props', completed: 72, total: 100, color: 'hsl(var(--accent))' },
-    { name: 'Hooks Avanzados', completed: 64, total: 100, color: 'hsl(var(--stepable-success))' },
-    { name: 'Testing', completed: 45, total: 100, color: 'hsl(var(--stepable-warning))' },
-    { name: 'Deployment', completed: 28, total: 100, color: 'hsl(var(--stepable-error))' },
-  ];
-
-  const deviceData = [
-    { name: 'Desktop', value: 65, color: 'hsl(var(--primary))' },
-    { name: 'Mobile', value: 25, color: 'hsl(var(--accent))' },
-    { name: 'Tablet', value: 10, color: 'hsl(var(--stepable-success))' },
-  ];
-
-  const weeklyActivity = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(new Date(), 6 - i);
-    return {
-      day: format(date, 'EEE', { locale: es }),
-      hours: Math.floor(Math.random() * 8) + 2,
-      modules: Math.floor(Math.random() * 5) + 1,
-    };
-  });
-
-  return { last30Days, moduleData, deviceData, weeklyActivity };
-};
+import { useAuth } from '@/hooks/useAuth';
+import { useProjects, useProjectMembers } from '@/hooks/useProjects';
 
 const Analytics = () => {
   const { projectId } = useParams();
+  const { user } = useAuth();
+  const { projects } = useProjects();
+  const { members } = useProjectMembers(projectId!);
+  const [timeRange, setTimeRange] = useState("30d");
+  
+  const project = projects?.find(p => p.id === projectId);
+  
+  if (!project) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Proyecto no encontrado</h2>
+          <p className="text-muted-foreground">El proyecto que buscas no existe o no tienes acceso.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Generate mock data based on real project data
+  const generateMockData = () => {
+    const memberCount = members?.length || 0;
+    const daysToGenerate = timeRange === "7d" ? 7 : timeRange === "90d" ? 90 : timeRange === "1y" ? 365 : 30;
+    
+    const last30Days = Array.from({ length: daysToGenerate }, (_, i) => {
+      const date = subDays(new Date(), daysToGenerate - 1 - i);
+      return {
+        date: format(date, 'MMM dd', { locale: es }),
+        fullDate: date,
+        users: Math.floor(Math.random() * memberCount) + Math.floor(memberCount * 0.6),
+        sessions: Math.floor(Math.random() * (memberCount * 2)) + memberCount,
+        completions: Math.floor(Math.random() * Math.floor(memberCount * 0.3)) + 1,
+        engagement: Math.floor(Math.random() * 40) + 60,
+      };
+    });
+
+    const moduleData = [
+      { name: 'Configuración inicial', completed: 85, total: 100, color: 'hsl(var(--primary))' },
+      { name: 'Herramientas y setup', completed: 72, total: 100, color: 'hsl(var(--accent))' },
+      { name: 'Primeros pasos', completed: 64, total: 100, color: 'hsl(var(--stepable-success))' },
+      { name: 'Flujos avanzados', completed: 45, total: 100, color: 'hsl(var(--stepable-warning))' },
+      { name: 'Deployment', completed: 28, total: 100, color: 'hsl(var(--stepable-error))' },
+    ];
+
+    const deviceData = [
+      { name: 'Desktop', value: 65, color: 'hsl(var(--primary))' },
+      { name: 'Mobile', value: 25, color: 'hsl(var(--accent))' },
+      { name: 'Tablet', value: 10, color: 'hsl(var(--stepable-success))' },
+    ];
+
+    const weeklyActivity = Array.from({ length: 7 }, (_, i) => {
+      const date = subDays(new Date(), 6 - i);
+      return {
+        day: format(date, 'EEE', { locale: es }),
+        hours: Math.floor(Math.random() * 8) + 2,
+        modules: Math.floor(Math.random() * 5) + 1,
+      };
+    });
+
+    return { last30Days, moduleData, deviceData, weeklyActivity };
+  };
+
   const { last30Days, moduleData, deviceData, weeklyActivity } = generateMockData();
 
   const keyMetrics = [
     {
-      title: 'Usuarios Activos',
-      value: '2,847',
+      title: 'Miembros Activos',
+      value: members?.length.toString() || '0',
       change: '+12.5%',
       trend: 'up',
       icon: Users,
-      description: 'En los últimos 30 días',
+      description: 'Miembros en el proyecto',
     },
     {
       title: 'Tiempo Promedio',
@@ -105,7 +126,7 @@ const Analytics = () => {
       description: 'Por sesión de estudio',
     },
     {
-      title: 'Tasa de Completitud',
+      title: 'Completitud',
       value: '78%',
       change: '+5.1%',
       trend: 'up',
@@ -113,7 +134,7 @@ const Analytics = () => {
       description: 'Módulos completados',
     },
     {
-      title: 'Engagement Score',
+      title: 'Engagement',
       value: '8.4/10',
       change: '+0.8',
       trend: 'up',
@@ -124,30 +145,30 @@ const Analytics = () => {
 
   const recentActivity = [
     {
-      user: 'María González',
-      action: 'Completó el módulo "React Hooks"',
-      time: 'Hace 2 horas',
-      avatar: 'MG',
+      user: members?.[0]?.profiles?.full_name || 'Usuario',
+      action: 'Completó el módulo "Configuración inicial"',
+      time: 'Hace 2 horas', 
+      avatar: members?.[0]?.profiles?.full_name?.charAt(0) || members?.[0]?.profiles?.email?.charAt(0) || 'U',
     },
     {
-      user: 'Carlos Ruiz',
-      action: 'Inició "Testing con Jest"',
+      user: members?.[1]?.profiles?.full_name || 'Usuario',
+      action: 'Inició "Herramientas y setup"',
       time: 'Hace 3 horas',
-      avatar: 'CR',
+      avatar: members?.[1]?.profiles?.full_name?.charAt(0) || members?.[1]?.profiles?.email?.charAt(0) || 'U',
     },
     {
-      user: 'Ana Martín',
-      action: 'Logró certificación Bronze',
+      user: members?.[2]?.profiles?.full_name || 'Usuario',
+      action: 'Logró completar ejercicio práctico', 
       time: 'Hace 5 horas',
-      avatar: 'AM',
+      avatar: members?.[2]?.profiles?.full_name?.charAt(0) || members?.[2]?.profiles?.email?.charAt(0) || 'U',
     },
     {
-      user: 'Diego López',
-      action: 'Completó ejercicio práctico',
+      user: members?.[3]?.profiles?.full_name || 'Usuario',
+      action: 'Se unió al proyecto',
       time: 'Hace 1 día',
-      avatar: 'DL',
+      avatar: members?.[3]?.profiles?.full_name?.charAt(0) || members?.[3]?.profiles?.email?.charAt(0) || 'U',
     },
-  ];
+  ].filter(activity => activity.user !== 'Usuario'); // Filter out placeholder users
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-background">
@@ -162,7 +183,7 @@ const Analytics = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Select defaultValue="30d">
+          <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
