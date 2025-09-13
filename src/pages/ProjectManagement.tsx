@@ -36,7 +36,8 @@ import {
   Eye,
   Mail,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Save
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,7 +50,7 @@ const ProjectManagement = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { projects } = useProjects();
+  const { projects, updateProject, deleteProject } = useProjects();
   const { 
     members, 
     invitations, 
@@ -66,6 +67,7 @@ const ProjectManagement = () => {
     name: "",
     description: ""
   });
+  const [saving, setSaving] = useState(false);
   
   const { toast } = useToast();
   
@@ -73,6 +75,16 @@ const ProjectManagement = () => {
   const isOwner = project?.owner_id === user?.id;
   const userMember = members?.find(m => m.user_id === user?.id);
   const isAdmin = isOwner || userMember?.role === 'admin';
+
+  // Initialize settings data when project loads
+  useState(() => {
+    if (project) {
+      setSettingsData({
+        name: project.name,
+        description: project.description || ""
+      });
+    }
+  });
 
   if (!project) {
     return (
@@ -137,6 +149,31 @@ const ProjectManagement = () => {
         description: "No se pudo eliminar al miembro",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleUpdateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    
+    try {
+      await updateProject(projectId!, {
+        name: settingsData.name || undefined,
+        description: settingsData.description || undefined
+      });
+    } catch (error) {
+      // Error handling is done in the hook
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    try {
+      await deleteProject(projectId!);
+      navigate('/');
+    } catch (error) {
+      // Error handling is done in the hook
     }
   };
 
@@ -447,26 +484,32 @@ const ProjectManagement = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="projectName">Nombre del proyecto</Label>
-                  <Input
-                    id="projectName"
-                    value={settingsData.name || project.name}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Nombre del proyecto"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="projectDescription">Descripción</Label>
-                  <Textarea
-                    id="projectDescription"
-                    value={settingsData.description || project.description || ''}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe tu proyecto..."
-                    rows={3}
-                  />
-                </div>
-                <Button>Guardar cambios</Button>
+                <form onSubmit={handleUpdateProject} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="projectName">Nombre del proyecto</Label>
+                    <Input
+                      id="projectName"
+                      value={settingsData.name}
+                      onChange={(e) => setSettingsData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Nombre del proyecto"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="projectDescription">Descripción</Label>
+                    <Textarea
+                      id="projectDescription"
+                      value={settingsData.description}
+                      onChange={(e) => setSettingsData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Describe tu proyecto..."
+                      rows={3}
+                    />
+                  </div>
+                  <Button type="submit" disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? 'Guardando...' : 'Guardar cambios'}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
 
@@ -496,11 +539,12 @@ const ProjectManagement = () => {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Eliminar permanentemente
-                        </AlertDialogAction>
+                      <AlertDialogAction
+                        onClick={handleDeleteProject}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Eliminar permanentemente
+                      </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>

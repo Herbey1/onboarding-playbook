@@ -11,11 +11,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Copy, RefreshCw, Users, Calendar } from "lucide-react";
+import { Copy, RefreshCw, Users, Calendar, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useProjectMembers } from "@/hooks/useProjects";
+import { useProjects, useProjectMembers } from "@/hooks/useProjects";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProjectInviteCodeProps {
   projectId: string;
@@ -24,25 +31,14 @@ interface ProjectInviteCodeProps {
 
 const ProjectInviteCode = ({ projectId, children }: ProjectInviteCodeProps) => {
   const [open, setOpen] = useState(false);
+  const { inviteUser, members, invitations, inviteCodes, generateInviteCode, deleteInviteCode } = useProjectMembers(projectId);
   const [generatingCode, setGeneratingCode] = useState(false);
-  const { inviteUser, members, invitations } = useProjectMembers(projectId);
+  const [newCodeRole, setNewCodeRole] = useState<'admin' | 'member' | 'viewer'>('member');
   const { toast } = useToast();
 
-  // Generate a mock invite code (in real app this would come from backend)
-  const generateInviteCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 12; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  };
-
-  const [inviteCode] = useState(generateInviteCode());
-
-  const handleCopyCode = async () => {
+  const handleCopyCode = async (code: string) => {
     try {
-      await navigator.clipboard.writeText(inviteCode);
+      await navigator.clipboard.writeText(code);
       toast({
         title: "¡Código copiado!",
         description: "El código de invitación ha sido copiado al portapapeles",
@@ -58,14 +54,21 @@ const ProjectInviteCode = ({ projectId, children }: ProjectInviteCodeProps) => {
 
   const handleGenerateNewCode = async () => {
     setGeneratingCode(true);
-    // TODO: Implement generate new code in backend
-    setTimeout(() => {
+    try {
+      await generateInviteCode(newCodeRole, 30);
+    } catch (error) {
+      // Error handling is done in the hook
+    } finally {
       setGeneratingCode(false);
-      toast({
-        title: "Nuevo código generado",
-        description: "Se ha generado un nuevo código de invitación",
-      });
-    }, 1000);
+    }
+  };
+
+  const handleDeleteCode = async (codeId: string) => {
+    try {
+      await deleteInviteCode(codeId);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
   };
 
   const handleInviteByEmail = async (email: string) => {
@@ -101,37 +104,76 @@ const ProjectInviteCode = ({ projectId, children }: ProjectInviteCodeProps) => {
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Invite Code Section */}
+          {/* Generate New Code Section */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Código de invitación</Label>
+            <Label className="text-sm font-medium">Generar nuevo código</Label>
             <div className="flex items-center gap-2">
-              <Input 
-                value={inviteCode} 
-                readOnly 
-                className="font-mono text-center tracking-widest text-lg"
-              />
+              <Select value={newCodeRole} onValueChange={setNewCodeRole as any}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                  <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyCode}
-                className="flex-shrink-0"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={handleGenerateNewCode}
                 disabled={generatingCode}
                 className="flex-shrink-0"
               >
-                <RefreshCw className={`h-4 w-4 ${generatingCode ? 'animate-spin' : ''}`} />
+                <Plus className={`h-4 w-4 mr-2 ${generatingCode ? 'animate-spin' : ''}`} />
+                {generatingCode ? 'Generando...' : 'Generar código'}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Los miembros pueden usar este código para unirse al proyecto
-            </p>
           </div>
+
+          {/* Active Invite Codes */}
+          {inviteCodes && inviteCodes.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                Códigos activos ({inviteCodes.length})
+              </Label>
+              <div className="space-y-2">
+                {inviteCodes.map((code) => (
+                  <div key={code.id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <code className="font-mono text-sm bg-muted px-2 py-1 rounded">
+                          {code.code}
+                        </code>
+                        <Badge variant="secondary" className="text-xs">
+                          {code.role}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Expira: {format(new Date(code.expires_at), "dd/MM/yyyy HH:mm", { locale: es })}
+                        {code.uses_left && ` • ${code.uses_left} usos restantes`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyCode(code.code)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteCode(code.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Current Members */}
           <div className="space-y-3">

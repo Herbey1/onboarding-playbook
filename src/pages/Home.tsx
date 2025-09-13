@@ -90,7 +90,7 @@ const stackColors: Record<string, string> = {
 
 const Home = () => {
   const { user, loading: authLoading } = useAuth();
-  const { projects, loading: projectsLoading, createProject } = useProjects();
+  const { projects, loading: projectsLoading, createProject, deleteProject, joinProjectByCode } = useProjects();
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [leaveProjectId, setLeaveProjectId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -109,32 +109,21 @@ const Home = () => {
   };
 
   const handleJoinProject = async (inviteCode: string) => {
-    // TODO: Implement join by invite code
-    // This would require implementing the invite system in the backend
-    toast({
-      title: "Función en desarrollo",
-      description: "La funcionalidad de unirse por código estará disponible pronto",
-      variant: "default",
-    });
+    if (!user) return;
+    await joinProjectByCode(inviteCode);
   };
 
   const handleDeleteProject = async (projectId: string) => {
-    // TODO: Implement project deletion
-    toast({
-      title: "Función en desarrollo", 
-      description: "La eliminación de proyectos estará disponible pronto",
-      variant: "default",
-    });
+    await deleteProject(projectId);
     setDeleteProjectId(null);
   };
 
   const handleLeaveProject = async (projectId: string) => {
-    // TODO: Implement leave project
-    toast({
-      title: "Función en desarrollo",
-      description: "Abandonar proyecto estará disponible pronto", 
-      variant: "default",
-    });
+    const projectMembers = useProjectMembers(projectId);
+    const success = await projectMembers.leaveProject();
+    if (success) {
+      // Project will be removed from list automatically when we refetch
+    }
     setLeaveProjectId(null);
   };
 
@@ -250,10 +239,10 @@ const Home = () => {
         
         <div className="flex gap-3">
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <JoinProjectDialog onJoinProject={handleJoinProject} />
+            <JoinProjectDialog onJoinProject={handleJoinProject} loading={projectsLoading} />
           </motion.div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <CreateProjectDialog onCreateProject={handleCreateProject} />
+            <CreateProjectDialog onCreateProject={handleCreateProject} loading={projectsLoading} />
           </motion.div>
         </div>
       </motion.div>

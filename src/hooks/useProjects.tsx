@@ -112,6 +112,92 @@ export function useProjects() {
     }
   };
 
+  const updateProject = async (projectId: string, updates: { name?: string; description?: string }) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Proyecto actualizado",
+        description: "Los cambios se han guardado correctamente"
+      });
+
+      fetchProjects();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el proyecto",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const deleteProject = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Proyecto eliminado",
+        description: "El proyecto ha sido eliminado permanentemente"
+      });
+
+      fetchProjects();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el proyecto",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const joinProjectByCode = async (code: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('project-invite-codes?action=join', {
+        body: { code },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to join project');
+      }
+
+      toast({
+        title: "¡Te has unido al proyecto!",
+        description: `Ahora eres miembro de "${data.data.project_name}"`
+      });
+
+      fetchProjects();
+      return data.data;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Código de invitación inválido o expirado", 
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -120,6 +206,9 @@ export function useProjects() {
     projects,
     loading,
     createProject,
+    updateProject,
+    deleteProject,
+    joinProjectByCode,
     refetch: fetchProjects
   };
 }
@@ -127,6 +216,7 @@ export function useProjects() {
 export function useProjectMembers(projectId: string) {
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [invitations, setInvitations] = useState<ProjectInvitation[]>([]);
+  const [inviteCodes, setInviteCodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -163,6 +253,9 @@ export function useProjectMembers(projectId: string) {
 
       setMembers((membersData as any) || []);
       setInvitations(invitationsData || []);
+      
+      // Fetch invite codes
+      await fetchInviteCodes();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -171,6 +264,88 @@ export function useProjectMembers(projectId: string) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInviteCodes = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke(`project-invite-codes?project_id=${projectId}`, {
+        method: 'GET'
+      });
+
+      if (error) {
+        console.warn('Could not fetch invite codes:', error);
+        return;
+      }
+
+      if (data?.success) {
+        setInviteCodes(data.data || []);
+      }
+    } catch (error) {
+      console.warn('Could not fetch invite codes:', error);
+    }
+  };
+
+  const generateInviteCode = async (role: 'admin' | 'member' | 'viewer' = 'member', expiresInDays: number = 30, usesLeft?: number) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('project-invite-codes?action=generate', {
+        body: {
+          project_id: projectId,
+          role,
+          expires_in_days: expiresInDays,
+          uses_left: usesLeft
+        },
+        method: 'POST'
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate invite code');
+      }
+
+      toast({
+        title: "Código generado",
+        description: "Se ha creado un nuevo código de invitación"
+      });
+
+      await fetchInviteCodes();
+      return data.data;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo generar el código de invitación",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const deleteInviteCode = async (codeId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke(`project-invite-codes?code_id=${codeId}`, {
+        method: 'DELETE'
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete invite code');
+      }
+
+      toast({
+        title: "Código eliminado", 
+        description: "El código de invitación ha sido eliminado"
+      });
+
+      await fetchInviteCodes();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el código",
+        variant: "destructive"
+      });
+      throw error;
     }
   };
 
@@ -325,12 +500,15 @@ export function useProjectMembers(projectId: string) {
   return {
     members,
     invitations,
+    inviteCodes,
     loading,
     inviteUser,
     changeRole,
     removeMember,
     cancelInvitation,
     leaveProject,
+    generateInviteCode,
+    deleteInviteCode,
     refetch: fetchMembers
   };
 }
